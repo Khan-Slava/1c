@@ -102,14 +102,108 @@
 	ВыполнитьЗагрузкуНаСервере();
 КонецПроцедуры
 
+&НаСервере
+Процедура УдалитьУволенных(Рез) 
+	//Токен = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxMDA5IiwianRpIjoiMDJlZDk1YTg5OTAwNGQ5MzJhNDU0YThhMjFjMmFiNDc1ZTEyMzk4YmFiYjA0NTQ1MGZlYWRlMTRjYTliNDUzMmJjOTA4YzcwNTRkNDEwYjkiLCJpYXQiOjE2OTM4MTgzMjUuMzUzMzY5LCJuYmYiOjE2OTM4MTgzMjUuMzUzMzcxLCJleHAiOjE3MjU0NDA3MjUuMzQ5NTM3LCJzdWIiOiIiLCJzY29wZXMiOltdfQ.I5qyYrw9RQrUuZibHnJkmST_Y7VotGVW16xT2Nn9R7jAhLDDICj4xgPuBwslCs_5vRuuvYlX_KkZRbX42EnApwgBgME6BqoiS6RiW88V8qoPhiBVUh-eaMyAtf714klTOs6AVgxOxuLK4tPqgEQJUQwNhRhdFE65RhR24GUWnNtIqdb7otYWexkwXSf6rDhCXidfDNv2DVXB9Y29kgVlvA0jg26bR40Rqn92iccqHezRKfUb4LiumLxT_QNskGpeyKZDD5ecdjtQlipZcymK9t03Ed6dsyNofaSixJa640IIGbIonkhWauCseNsPicWsXcGBCizrQ9ZWOWSoWOAMderv3TayJth7oxmclZUX0lxoeeJlkRVTAgrD39Z2LGTM3PNo17Dw5S9IVyUFmzQa_CSaTEG6dDUXcSNvqZoSHJfs2u5d-04XiZs_NkaBaRnSoj2jdPGwU5Y8zKieY2rAjXK_W8ZqLFiAvOr5VPlhmIlD82ARRcp40LpobYVTncgQuDyX_ChlkVrH3qNFpZsZ2CIZqY7u2Jyug0aR3_N_lEzQ-odzbDLp6ujHzk6KEXcbIsK1R_6kok0rzQv5XOhuITlkxLiTnmZNIA2AOgWfFZ2OlC91pmCH6j7c6S3TgW7FJsypx6hNx2N4cwWvkUUa5uZ1HJ5HxFvUWwsG5phNiuo";
+	Токен = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiI3NzgiLCJqdGkiOiI2NzEwZDIzNjA1ZjE2ZDQ2Y2Y3YzVkMGFjMDQwYmRiMjNiMGY5ZjQ1M2NjODFkMDAzMjNkOTZlYWM3NWVhNDdjNTY3ZDAyMDNiYWYwYWJhMCIsImlhdCI6MTY3Njk1NTg3Ni43OTYzMjgsIm5iZiI6MTY3Njk1NTg3Ni43OTYzMjksImV4cCI6MTcwODQ5MTg3Ni43OTM0OSwic3ViIjoiIiwic2NvcGVzIjpbXX0.tRpu5PMcSz6rVNRA4wCKXc97qGyum7ytQha-FG89TCOasLOO7HO7qIdU4tRP3ZiGTtg6ej8GOhaz5AKzqSE2jfTwirJC41gmcqP_qbNg9AoUOMoj2F5SmFuitxlED_HneoyfeZxhrMHPRIzMX2HswMSfozpQbU_LZ3FGOUmSUh16REzgcGeyvaZ5x0V5JJQDQT32gR7HLH2yxRjukUlJS4Qg1R1cgiyn-JzDlzsHvykcSk480N8X9qT_f1CjPNJgAmrp3NyP1VkoVLh5yXQpCu7B_ezTR37tAW54DDvkk2pO_CjVqtflfz02sI3RynhkhRb-ICGdGqk7vxXwzeyBGVOrbS7VFHnoDQMMEXkk6k_9wM-L1fuQ_bAc3b3vwbpE3PDiz3PAhIRjrQUCtQBW5VROjnyhCZT-4bPt8-ovX4-FRI1TZCpVmBdK2KoQwaQF2ojRiaLggZ2jwQZTt3BhRs7VvBkcNjP6JvvRpoYcHM-UwW90efiYB17qLMk30OKHMksE9UAbj9q-4Ej6Ivok7TTbMlYu4OaTgz_gaEOWMQaUUGlqLqS0_2mH9INMBTeKxooOn1s0D7H-zYRsL5F5FOWECqU3zk9PJpid6GPoIBYkPP35aGQ4qsDaCCwG8L1RpsPPopHWUSFkJZcYyaJQjYBPMA6kbfPIghPLJle99yQ";
+	//Токен = Новый ТокенДоступа;
+	// КлючПодписи = Константы.dls_КлючДоступа.Получить();
+	//Токен.Подписать(АлгоритмПодписиТокенаДоступа.HS256,КлючПодписи);
+	
+	Массотр = Новый Массив;
+	Пока Рез.Следующий() и МасСотр.Количество() < 50 Цикл
+		//Структ = Новый Структура();
+		Массотр.Добавить(Рез.Ид);
+	КонецЦикла;
+		
+	Попытка
+		ЗащищенноеСоединение = Новый ЗащищенноеСоединениеOpenSSL();
+		HTTP = Новый HTTPСоединение("apis.clockster.com");
+    	    
+	    //создадим структуру
+	    Статус = "";
+	    Парам = Новый 
+	        Структура("page,per_page,sort,order,search",
+	        3,2,,,);
+	    //   				 
+	    ////сериализуем в json
+		//ЗаписьJSON = Новый ЗаписьJSON;
+		//ЗаписьJSON.УстановитьСтроку();
+		//ЗаписатьJSON(ЗаписьJSON, Парам);
+		//СтрокаДляТела = ЗаписьJSON.Закрыть();
+		//
+		////получим временный файл для передачи в теле POST-запроса
+		//ФайлТелаЗапроса = ПолучитьИмяВременногоФайла();
+		////запишем в файл содержимое тела запроса (текст)
+		//ТекстФайл = Новый ТекстовыйДокумент;
+		//ТекстФайл.УстановитьТекст(СтрокаДляТела);
+		//ТекстФайл.Записать(ФайлТелаЗапроса, КодировкаТекста.UTF8);
+		////получим размер данных для передачи в заголовок
+		//ФайлНаОтправку = Новый Файл(ФайлТелаЗапроса);
+		//РазмерФайлаНаОтправку = XMLСтрока(ФайлНаОтправку.Размер());
+	    
+	    //заголовок создадим в виде соответствия
+	    ЗаголовокЗапросаHTTP = Новый Соответствие();
+	    //передаем в заголовках размер и тип данных на отправку
+		ЗаголовокЗапросаHTTP.Вставить("Authorization", "Bearer "+Токен);
+		ЗаголовокЗапросаHTTP.Вставить("Content-Type", "application/json");
+		ЗаголовокЗапросаHTTP.Вставить("Accept", "application/json");
 
+	    
+	    //создадим заголовок запроса
+	    //ЗапросHTTP = Новый HTTPЗапрос("company/v1/users?per_page=50&page="+Пэйж, ЗаголовокЗапросаHTTP);  //?location_id=7214
+	    
+	    //загрузить строку в тело
+			    
+	    //отсылаем POST-запрос на обработку.
+	    //ссылкаНаРесурс — ссылка на веб-сервер (страницу), к которой посылается POST
+	    //запрос  
+		СтруктДата = Новый Структура;
+		СтруктДата.Вставить("data",МасСотр);
+		
+		ЗаписьJSON = Новый ЗаписьJSON;
+		ЗаписьJSON.УстановитьСтроку();
+		
+		ЗаписатьJSON(ЗаписьJSON,СтруктДата);
+		//ЗаписатьJSON(ЗаписьJSON,Парам);       //,Парам
+		СтрокаДляТела = ЗаписьJSON.Закрыть();
+		
+		ЗапросHTTP = Новый HTTPЗапрос("company/v1/users",ЗаголовокЗапросаHTTP);
+		ЗапросHTTP.УстановитьТелоИзСтроки(СтрокаДляТела,КодировкаТекста.UTF8);
+	
+		//Если ТекСотрудник.ВТКод=Неопределено ИЛИ Не ЗначениеЗаполнено(ТекСотрудник.ВТКод) Тогда
+			
+			ОтветHTTP = HTTP.ВызватьHTTPМетод("DELETE",ЗапросHTTP);
+		//Иначе
 
+		//	ОтветHTTP = HTTP.ВызватьHTTPМетод("PUT",ЗапросHTTP);
+			
+		//КонецЕсли;
+		Пока ОтветHTTP.КодСостояния = 429 Цикл
+			НачОжидания = Минута(ТекущаяДата());
+			Пока НачОжидания = Минута(ТекущаяДата()) Цикл
+			КонецЦикла;
+			ОтветHTTP = HTTP.Получить(ЗапросHTTP);
+		КонецЦикла;
+		
+		ЧтениеJSON = Новый ЧтениеJSON; 
+		ЧтениеJSON.УстановитьСтроку(ОтветHTTP.ПолучитьТелоКакСтроку());
+		Структура = ПрочитатьJSON(ЧтениеJSON);
+		ЧтениеJSON.Закрыть();
+	 
+	Исключение
+		Сообщить(ОписаниеОшибки());
+	КонецПопытки;
+	//Сообщить(ЗапросHTTP.ПолучитьТелоКакСтроку());
+	//Сообщить(ОтветHTTP.ПолучитьТело);
+
+КонецПроцедуры 
 
 &НаСервере
 Процедура СоздатьСотрудника()
 	//Токен = Константы.dls_КлючДоступа.Получить();
-	Токен = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxMDA5IiwianRpIjoiMDJlZDk1YTg5OTAwNGQ5MzJhNDU0YThhMjFjMmFiNDc1ZTEyMzk4YmFiYjA0NTQ1MGZlYWRlMTRjYTliNDUzMmJjOTA4YzcwNTRkNDEwYjkiLCJpYXQiOjE2OTM4MTgzMjUuMzUzMzY5LCJuYmYiOjE2OTM4MTgzMjUuMzUzMzcxLCJleHAiOjE3MjU0NDA3MjUuMzQ5NTM3LCJzdWIiOiIiLCJzY29wZXMiOltdfQ.I5qyYrw9RQrUuZibHnJkmST_Y7VotGVW16xT2Nn9R7jAhLDDICj4xgPuBwslCs_5vRuuvYlX_KkZRbX42EnApwgBgME6BqoiS6RiW88V8qoPhiBVUh-eaMyAtf714klTOs6AVgxOxuLK4tPqgEQJUQwNhRhdFE65RhR24GUWnNtIqdb7otYWexkwXSf6rDhCXidfDNv2DVXB9Y29kgVlvA0jg26bR40Rqn92iccqHezRKfUb4LiumLxT_QNskGpeyKZDD5ecdjtQlipZcymK9t03Ed6dsyNofaSixJa640IIGbIonkhWauCseNsPicWsXcGBCizrQ9ZWOWSoWOAMderv3TayJth7oxmclZUX0lxoeeJlkRVTAgrD39Z2LGTM3PNo17Dw5S9IVyUFmzQa_CSaTEG6dDUXcSNvqZoSHJfs2u5d-04XiZs_NkaBaRnSoj2jdPGwU5Y8zKieY2rAjXK_W8ZqLFiAvOr5VPlhmIlD82ARRcp40LpobYVTncgQuDyX_ChlkVrH3qNFpZsZ2CIZqY7u2Jyug0aR3_N_lEzQ-odzbDLp6ujHzk6KEXcbIsK1R_6kok0rzQv5XOhuITlkxLiTnmZNIA2AOgWfFZ2OlC91pmCH6j7c6S3TgW7FJsypx6hNx2N4cwWvkUUa5uZ1HJ5HxFvUWwsG5phNiuo";
-	//Токен = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiI3NzgiLCJqdGkiOiI2NzEwZDIzNjA1ZjE2ZDQ2Y2Y3YzVkMGFjMDQwYmRiMjNiMGY5ZjQ1M2NjODFkMDAzMjNkOTZlYWM3NWVhNDdjNTY3ZDAyMDNiYWYwYWJhMCIsImlhdCI6MTY3Njk1NTg3Ni43OTYzMjgsIm5iZiI6MTY3Njk1NTg3Ni43OTYzMjksImV4cCI6MTcwODQ5MTg3Ni43OTM0OSwic3ViIjoiIiwic2NvcGVzIjpbXX0.tRpu5PMcSz6rVNRA4wCKXc97qGyum7ytQha-FG89TCOasLOO7HO7qIdU4tRP3ZiGTtg6ej8GOhaz5AKzqSE2jfTwirJC41gmcqP_qbNg9AoUOMoj2F5SmFuitxlED_HneoyfeZxhrMHPRIzMX2HswMSfozpQbU_LZ3FGOUmSUh16REzgcGeyvaZ5x0V5JJQDQT32gR7HLH2yxRjukUlJS4Qg1R1cgiyn-JzDlzsHvykcSk480N8X9qT_f1CjPNJgAmrp3NyP1VkoVLh5yXQpCu7B_ezTR37tAW54DDvkk2pO_CjVqtflfz02sI3RynhkhRb-ICGdGqk7vxXwzeyBGVOrbS7VFHnoDQMMEXkk6k_9wM-L1fuQ_bAc3b3vwbpE3PDiz3PAhIRjrQUCtQBW5VROjnyhCZT-4bPt8-ovX4-FRI1TZCpVmBdK2KoQwaQF2ojRiaLggZ2jwQZTt3BhRs7VvBkcNjP6JvvRpoYcHM-UwW90efiYB17qLMk30OKHMksE9UAbj9q-4Ej6Ivok7TTbMlYu4OaTgz_gaEOWMQaUUGlqLqS0_2mH9INMBTeKxooOn1s0D7H-zYRsL5F5FOWECqU3zk9PJpid6GPoIBYkPP35aGQ4qsDaCCwG8L1RpsPPopHWUSFkJZcYyaJQjYBPMA6kbfPIghPLJle99yQ";
+	//Токен = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxMDA5IiwianRpIjoiMDJlZDk1YTg5OTAwNGQ5MzJhNDU0YThhMjFjMmFiNDc1ZTEyMzk4YmFiYjA0NTQ1MGZlYWRlMTRjYTliNDUzMmJjOTA4YzcwNTRkNDEwYjkiLCJpYXQiOjE2OTM4MTgzMjUuMzUzMzY5LCJuYmYiOjE2OTM4MTgzMjUuMzUzMzcxLCJleHAiOjE3MjU0NDA3MjUuMzQ5NTM3LCJzdWIiOiIiLCJzY29wZXMiOltdfQ.I5qyYrw9RQrUuZibHnJkmST_Y7VotGVW16xT2Nn9R7jAhLDDICj4xgPuBwslCs_5vRuuvYlX_KkZRbX42EnApwgBgME6BqoiS6RiW88V8qoPhiBVUh-eaMyAtf714klTOs6AVgxOxuLK4tPqgEQJUQwNhRhdFE65RhR24GUWnNtIqdb7otYWexkwXSf6rDhCXidfDNv2DVXB9Y29kgVlvA0jg26bR40Rqn92iccqHezRKfUb4LiumLxT_QNskGpeyKZDD5ecdjtQlipZcymK9t03Ed6dsyNofaSixJa640IIGbIonkhWauCseNsPicWsXcGBCizrQ9ZWOWSoWOAMderv3TayJth7oxmclZUX0lxoeeJlkRVTAgrD39Z2LGTM3PNo17Dw5S9IVyUFmzQa_CSaTEG6dDUXcSNvqZoSHJfs2u5d-04XiZs_NkaBaRnSoj2jdPGwU5Y8zKieY2rAjXK_W8ZqLFiAvOr5VPlhmIlD82ARRcp40LpobYVTncgQuDyX_ChlkVrH3qNFpZsZ2CIZqY7u2Jyug0aR3_N_lEzQ-odzbDLp6ujHzk6KEXcbIsK1R_6kok0rzQv5XOhuITlkxLiTnmZNIA2AOgWfFZ2OlC91pmCH6j7c6S3TgW7FJsypx6hNx2N4cwWvkUUa5uZ1HJ5HxFvUWwsG5phNiuo";
+	Токен = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiI3NzgiLCJqdGkiOiI2NzEwZDIzNjA1ZjE2ZDQ2Y2Y3YzVkMGFjMDQwYmRiMjNiMGY5ZjQ1M2NjODFkMDAzMjNkOTZlYWM3NWVhNDdjNTY3ZDAyMDNiYWYwYWJhMCIsImlhdCI6MTY3Njk1NTg3Ni43OTYzMjgsIm5iZiI6MTY3Njk1NTg3Ni43OTYzMjksImV4cCI6MTcwODQ5MTg3Ni43OTM0OSwic3ViIjoiIiwic2NvcGVzIjpbXX0.tRpu5PMcSz6rVNRA4wCKXc97qGyum7ytQha-FG89TCOasLOO7HO7qIdU4tRP3ZiGTtg6ej8GOhaz5AKzqSE2jfTwirJC41gmcqP_qbNg9AoUOMoj2F5SmFuitxlED_HneoyfeZxhrMHPRIzMX2HswMSfozpQbU_LZ3FGOUmSUh16REzgcGeyvaZ5x0V5JJQDQT32gR7HLH2yxRjukUlJS4Qg1R1cgiyn-JzDlzsHvykcSk480N8X9qT_f1CjPNJgAmrp3NyP1VkoVLh5yXQpCu7B_ezTR37tAW54DDvkk2pO_CjVqtflfz02sI3RynhkhRb-ICGdGqk7vxXwzeyBGVOrbS7VFHnoDQMMEXkk6k_9wM-L1fuQ_bAc3b3vwbpE3PDiz3PAhIRjrQUCtQBW5VROjnyhCZT-4bPt8-ovX4-FRI1TZCpVmBdK2KoQwaQF2ojRiaLggZ2jwQZTt3BhRs7VvBkcNjP6JvvRpoYcHM-UwW90efiYB17qLMk30OKHMksE9UAbj9q-4Ej6Ivok7TTbMlYu4OaTgz_gaEOWMQaUUGlqLqS0_2mH9INMBTeKxooOn1s0D7H-zYRsL5F5FOWECqU3zk9PJpid6GPoIBYkPP35aGQ4qsDaCCwG8L1RpsPPopHWUSFkJZcYyaJQjYBPMA6kbfPIghPLJle99yQ";
 	Локейшены = Новый ТаблицаЗначений();
 	Локейшены.Колонки.Добавить("id",Новый ОписаниеТипов("Строка", ,Новый КвалификаторыСтроки(25)));
 	Локейшены.Колонки.Добавить("Локейшен",Новый ОписаниеТипов("Строка", ,Новый КвалификаторыСтроки(25)));
@@ -131,21 +225,7 @@
 		КонецЦикла;
 		й=й+1;
 	КонецЦикла;
-	////////////////////////
-    Позишн = Новый Соответствие;
-		
-	й=1;
-	Пока й>0 Цикл
-		ТекПозишн = ПолучитьПозишн(й);
-		Если Не ЗначениеЗаполнено(ТекПозишн) Тогда
-			Прервать;
-		КонецЕсли;
-		Для Каждого Сотр из ТекПозишн Цикл
-			Позишн.Вставить(УбратьПробелы(Сотр.title),УбратьПробелы(Сотр.id));
-		КонецЦикла;
-		й=й+1;
-	КонецЦикла;
-	///////////////
+	
 	
 	Масс = Новый Массив;
 	Масс.Добавить(Тип("Число")); 
@@ -183,8 +263,43 @@
 			
 		КонецЦикла;
 		й=й+1;
-	КонецЦикла;
+	КонецЦикла;  
 	
+	//Запрос по уволенным
+	Запрос = Новый Запрос;
+	Запрос.Текст = "Выбрать ВТ.ИД, ВТ.КОД, ВТ.Локейшен, ВТ.Роль Поместить ВТ_Сотрудников из &Сотрудники как ВТ где Увол =""null"" или Увол is null или Увол = """" ;  
+	|
+	|        
+|Выбрать Спр.Ссылка, Доп.Значение СтарыйКод 
+|Поместить ВТ_ТЗСотрудников 
+|из Справочник.Сотрудники Как Спр
+|	левое Соединение (выбрать Максимум(НомерСтроки) макс, Ссылка, Свойство из справочник.Сотрудники.ДополнительныеРеквизиты 
+|	где Свойство.Наименование = ""Старый код (Сотрудники)"" сгруппировать по Ссылка, Свойство) Допмакс 
+|	По ДопМакс.ссылка  = Спр.Ссылка
+|Левое Соединение справочник.Сотрудники.ДополнительныеРеквизиты Доп По Доп.ссылка  = Спр.Ссылка и Доп.Свойство.Наименование = ""Старый код (Сотрудники)""
+| и Доп.НомерСтроки = ДопМакс.Макс
+|Внутреннее Соединение РегистрСведений.КадроваяИсторияСотрудников.СрезПоследних(&Дата) КИ
+|По КИ.Сотрудник = Спр.Ссылка и (КИ.Регистратор Ссылка Документ.Увольнение или КИ.Регистратор Ссылка Документ.УвольнениеСписком)
+//| Где КИ.Подразделение в иерархии (&Подр)  
+	|;
+
+	|ВЫБРАТЬ
+	               |	Сотр.Ссылка КАК Сотрудник, ВТ.ИД
+	               |ИЗ
+	               |	ВТ_ТЗСотрудников КАК Сотр
+				   |	Внутреннее Соединение ВТ_Сотрудников ВТ по ВТ.Код = Сотр.СтарыйКод или ВТ.Код = Сотр.Ссылка.Код"; 
+				   //|Где 1=1"; //ВТ.Код is null ";
+	Запрос.УстановитьПараметр("Дата", ДобавитьМесяц(ТекущаяДата(),-2));
+	Если ЗначениеЗаполнено(СотрудникФорм) Тогда 
+		Запрос.Текст = Запрос.Текст + "
+		| где Сотр.Ссылка = &Сотрудник";
+		Запрос.УстановитьПараметр("Сотрудник", СотрудникФорм);
+	КонецЕсли;
+	Запрос.Текст = Запрос.Текст + " Упорядочить по Сотр.Ссылка.Код";
+	Запрос.УстановитьПараметр("Сотрудники", ВсеСотрудники); 
+	РезУв = Запрос.Выполнить().Выбрать(); 
+	УдалитьУволенных(РезУв);
+		
 	//Если ВсеСотрудники.Количество()=0 Тогда
 	//	Сообщить("Не найдены сотрудники");
 	//	Возврат;
@@ -322,17 +437,18 @@
 			
 			Лок = Новый Массив;
 			Лок.Добавить(УбратьПробелы(ЛокОтвет));
-			МассЛок = Новый Массив; 
-			ОтборС = Новый Структура;
-			ОтборС.Вставить("Ид",ТекСотрудник.ИД);
-			МассЛок = ЛокСотр.НайтиСтроки(ОтборС);
-			Для каждого ТекЛок из МассЛок Цикл 
-				Для Каждого ИД из ТекЛок.Локейшены Цикл
-					Лок.Добавить(УбратьПробелы(ИД));
-				КонецЦикла;
-			КонецЦикла;
+			//Оставляем только текущее подразделение
+			//МассЛок = Новый Массив;
+			//ОтборС = Новый Структура;
+			//ОтборС.Вставить("Ид",ТекСотрудник.ИД);
+			//МассЛок = ЛокСотр.НайтиСтроки(ОтборС);
+			//Для каждого ТекЛок из МассЛок Цикл 
+			//	Для Каждого ИД из ТекЛок.Локейшены Цикл
+			//		Лок.Добавить(УбратьПробелы(ИД));
+			//	КонецЦикла;
+			//КонецЦикла;
 			Структ.Вставить("locations",Лок);
-			Структ.Вставить("position_id",Позишн.Получить(ТекСотрудник.Должность.Код));//+УбратьПробелы(Сотрудник.Должность.Код));
+			Структ.Вставить("position_id","");//+УбратьПробелы(Сотрудник.Должность.Код));
 			Структ.Вставить("gender",?(ТекСотрудник.Сотрудник.ФизическоеЛицо.Пол = Перечисления.ПолФизическогоЛица.Мужской,"male","female"));
 			
 			Структ.Вставить("locale","ru");
@@ -429,8 +545,8 @@
 
 &НаСервере
 Функция ПолучитьЮзеров(Пэйж)
-	Токен = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxMDA5IiwianRpIjoiMDJlZDk1YTg5OTAwNGQ5MzJhNDU0YThhMjFjMmFiNDc1ZTEyMzk4YmFiYjA0NTQ1MGZlYWRlMTRjYTliNDUzMmJjOTA4YzcwNTRkNDEwYjkiLCJpYXQiOjE2OTM4MTgzMjUuMzUzMzY5LCJuYmYiOjE2OTM4MTgzMjUuMzUzMzcxLCJleHAiOjE3MjU0NDA3MjUuMzQ5NTM3LCJzdWIiOiIiLCJzY29wZXMiOltdfQ.I5qyYrw9RQrUuZibHnJkmST_Y7VotGVW16xT2Nn9R7jAhLDDICj4xgPuBwslCs_5vRuuvYlX_KkZRbX42EnApwgBgME6BqoiS6RiW88V8qoPhiBVUh-eaMyAtf714klTOs6AVgxOxuLK4tPqgEQJUQwNhRhdFE65RhR24GUWnNtIqdb7otYWexkwXSf6rDhCXidfDNv2DVXB9Y29kgVlvA0jg26bR40Rqn92iccqHezRKfUb4LiumLxT_QNskGpeyKZDD5ecdjtQlipZcymK9t03Ed6dsyNofaSixJa640IIGbIonkhWauCseNsPicWsXcGBCizrQ9ZWOWSoWOAMderv3TayJth7oxmclZUX0lxoeeJlkRVTAgrD39Z2LGTM3PNo17Dw5S9IVyUFmzQa_CSaTEG6dDUXcSNvqZoSHJfs2u5d-04XiZs_NkaBaRnSoj2jdPGwU5Y8zKieY2rAjXK_W8ZqLFiAvOr5VPlhmIlD82ARRcp40LpobYVTncgQuDyX_ChlkVrH3qNFpZsZ2CIZqY7u2Jyug0aR3_N_lEzQ-odzbDLp6ujHzk6KEXcbIsK1R_6kok0rzQv5XOhuITlkxLiTnmZNIA2AOgWfFZ2OlC91pmCH6j7c6S3TgW7FJsypx6hNx2N4cwWvkUUa5uZ1HJ5HxFvUWwsG5phNiuo";
-	//Токен = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiI3NzgiLCJqdGkiOiI2NzEwZDIzNjA1ZjE2ZDQ2Y2Y3YzVkMGFjMDQwYmRiMjNiMGY5ZjQ1M2NjODFkMDAzMjNkOTZlYWM3NWVhNDdjNTY3ZDAyMDNiYWYwYWJhMCIsImlhdCI6MTY3Njk1NTg3Ni43OTYzMjgsIm5iZiI6MTY3Njk1NTg3Ni43OTYzMjksImV4cCI6MTcwODQ5MTg3Ni43OTM0OSwic3ViIjoiIiwic2NvcGVzIjpbXX0.tRpu5PMcSz6rVNRA4wCKXc97qGyum7ytQha-FG89TCOasLOO7HO7qIdU4tRP3ZiGTtg6ej8GOhaz5AKzqSE2jfTwirJC41gmcqP_qbNg9AoUOMoj2F5SmFuitxlED_HneoyfeZxhrMHPRIzMX2HswMSfozpQbU_LZ3FGOUmSUh16REzgcGeyvaZ5x0V5JJQDQT32gR7HLH2yxRjukUlJS4Qg1R1cgiyn-JzDlzsHvykcSk480N8X9qT_f1CjPNJgAmrp3NyP1VkoVLh5yXQpCu7B_ezTR37tAW54DDvkk2pO_CjVqtflfz02sI3RynhkhRb-ICGdGqk7vxXwzeyBGVOrbS7VFHnoDQMMEXkk6k_9wM-L1fuQ_bAc3b3vwbpE3PDiz3PAhIRjrQUCtQBW5VROjnyhCZT-4bPt8-ovX4-FRI1TZCpVmBdK2KoQwaQF2ojRiaLggZ2jwQZTt3BhRs7VvBkcNjP6JvvRpoYcHM-UwW90efiYB17qLMk30OKHMksE9UAbj9q-4Ej6Ivok7TTbMlYu4OaTgz_gaEOWMQaUUGlqLqS0_2mH9INMBTeKxooOn1s0D7H-zYRsL5F5FOWECqU3zk9PJpid6GPoIBYkPP35aGQ4qsDaCCwG8L1RpsPPopHWUSFkJZcYyaJQjYBPMA6kbfPIghPLJle99yQ";
+	//Токен = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxMDA5IiwianRpIjoiMDJlZDk1YTg5OTAwNGQ5MzJhNDU0YThhMjFjMmFiNDc1ZTEyMzk4YmFiYjA0NTQ1MGZlYWRlMTRjYTliNDUzMmJjOTA4YzcwNTRkNDEwYjkiLCJpYXQiOjE2OTM4MTgzMjUuMzUzMzY5LCJuYmYiOjE2OTM4MTgzMjUuMzUzMzcxLCJleHAiOjE3MjU0NDA3MjUuMzQ5NTM3LCJzdWIiOiIiLCJzY29wZXMiOltdfQ.I5qyYrw9RQrUuZibHnJkmST_Y7VotGVW16xT2Nn9R7jAhLDDICj4xgPuBwslCs_5vRuuvYlX_KkZRbX42EnApwgBgME6BqoiS6RiW88V8qoPhiBVUh-eaMyAtf714klTOs6AVgxOxuLK4tPqgEQJUQwNhRhdFE65RhR24GUWnNtIqdb7otYWexkwXSf6rDhCXidfDNv2DVXB9Y29kgVlvA0jg26bR40Rqn92iccqHezRKfUb4LiumLxT_QNskGpeyKZDD5ecdjtQlipZcymK9t03Ed6dsyNofaSixJa640IIGbIonkhWauCseNsPicWsXcGBCizrQ9ZWOWSoWOAMderv3TayJth7oxmclZUX0lxoeeJlkRVTAgrD39Z2LGTM3PNo17Dw5S9IVyUFmzQa_CSaTEG6dDUXcSNvqZoSHJfs2u5d-04XiZs_NkaBaRnSoj2jdPGwU5Y8zKieY2rAjXK_W8ZqLFiAvOr5VPlhmIlD82ARRcp40LpobYVTncgQuDyX_ChlkVrH3qNFpZsZ2CIZqY7u2Jyug0aR3_N_lEzQ-odzbDLp6ujHzk6KEXcbIsK1R_6kok0rzQv5XOhuITlkxLiTnmZNIA2AOgWfFZ2OlC91pmCH6j7c6S3TgW7FJsypx6hNx2N4cwWvkUUa5uZ1HJ5HxFvUWwsG5phNiuo";
+	Токен = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiI3NzgiLCJqdGkiOiI2NzEwZDIzNjA1ZjE2ZDQ2Y2Y3YzVkMGFjMDQwYmRiMjNiMGY5ZjQ1M2NjODFkMDAzMjNkOTZlYWM3NWVhNDdjNTY3ZDAyMDNiYWYwYWJhMCIsImlhdCI6MTY3Njk1NTg3Ni43OTYzMjgsIm5iZiI6MTY3Njk1NTg3Ni43OTYzMjksImV4cCI6MTcwODQ5MTg3Ni43OTM0OSwic3ViIjoiIiwic2NvcGVzIjpbXX0.tRpu5PMcSz6rVNRA4wCKXc97qGyum7ytQha-FG89TCOasLOO7HO7qIdU4tRP3ZiGTtg6ej8GOhaz5AKzqSE2jfTwirJC41gmcqP_qbNg9AoUOMoj2F5SmFuitxlED_HneoyfeZxhrMHPRIzMX2HswMSfozpQbU_LZ3FGOUmSUh16REzgcGeyvaZ5x0V5JJQDQT32gR7HLH2yxRjukUlJS4Qg1R1cgiyn-JzDlzsHvykcSk480N8X9qT_f1CjPNJgAmrp3NyP1VkoVLh5yXQpCu7B_ezTR37tAW54DDvkk2pO_CjVqtflfz02sI3RynhkhRb-ICGdGqk7vxXwzeyBGVOrbS7VFHnoDQMMEXkk6k_9wM-L1fuQ_bAc3b3vwbpE3PDiz3PAhIRjrQUCtQBW5VROjnyhCZT-4bPt8-ovX4-FRI1TZCpVmBdK2KoQwaQF2ojRiaLggZ2jwQZTt3BhRs7VvBkcNjP6JvvRpoYcHM-UwW90efiYB17qLMk30OKHMksE9UAbj9q-4Ej6Ivok7TTbMlYu4OaTgz_gaEOWMQaUUGlqLqS0_2mH9INMBTeKxooOn1s0D7H-zYRsL5F5FOWECqU3zk9PJpid6GPoIBYkPP35aGQ4qsDaCCwG8L1RpsPPopHWUSFkJZcYyaJQjYBPMA6kbfPIghPLJle99yQ";
 	//Токен = Новый ТокенДоступа;
 	// КлючПодписи = Константы.dls_КлючДоступа.Получить();
 	//Токен.Подписать(АлгоритмПодписиТокенаДоступа.HS256,КлючПодписи);
@@ -504,8 +620,8 @@
 
 &НаСервере
 Функция ПолучитьЛокейшены(Пэйж)
-	Токен = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxMDA5IiwianRpIjoiMDJlZDk1YTg5OTAwNGQ5MzJhNDU0YThhMjFjMmFiNDc1ZTEyMzk4YmFiYjA0NTQ1MGZlYWRlMTRjYTliNDUzMmJjOTA4YzcwNTRkNDEwYjkiLCJpYXQiOjE2OTM4MTgzMjUuMzUzMzY5LCJuYmYiOjE2OTM4MTgzMjUuMzUzMzcxLCJleHAiOjE3MjU0NDA3MjUuMzQ5NTM3LCJzdWIiOiIiLCJzY29wZXMiOltdfQ.I5qyYrw9RQrUuZibHnJkmST_Y7VotGVW16xT2Nn9R7jAhLDDICj4xgPuBwslCs_5vRuuvYlX_KkZRbX42EnApwgBgME6BqoiS6RiW88V8qoPhiBVUh-eaMyAtf714klTOs6AVgxOxuLK4tPqgEQJUQwNhRhdFE65RhR24GUWnNtIqdb7otYWexkwXSf6rDhCXidfDNv2DVXB9Y29kgVlvA0jg26bR40Rqn92iccqHezRKfUb4LiumLxT_QNskGpeyKZDD5ecdjtQlipZcymK9t03Ed6dsyNofaSixJa640IIGbIonkhWauCseNsPicWsXcGBCizrQ9ZWOWSoWOAMderv3TayJth7oxmclZUX0lxoeeJlkRVTAgrD39Z2LGTM3PNo17Dw5S9IVyUFmzQa_CSaTEG6dDUXcSNvqZoSHJfs2u5d-04XiZs_NkaBaRnSoj2jdPGwU5Y8zKieY2rAjXK_W8ZqLFiAvOr5VPlhmIlD82ARRcp40LpobYVTncgQuDyX_ChlkVrH3qNFpZsZ2CIZqY7u2Jyug0aR3_N_lEzQ-odzbDLp6ujHzk6KEXcbIsK1R_6kok0rzQv5XOhuITlkxLiTnmZNIA2AOgWfFZ2OlC91pmCH6j7c6S3TgW7FJsypx6hNx2N4cwWvkUUa5uZ1HJ5HxFvUWwsG5phNiuo";
-	//Токен = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiI3NzgiLCJqdGkiOiI2NzEwZDIzNjA1ZjE2ZDQ2Y2Y3YzVkMGFjMDQwYmRiMjNiMGY5ZjQ1M2NjODFkMDAzMjNkOTZlYWM3NWVhNDdjNTY3ZDAyMDNiYWYwYWJhMCIsImlhdCI6MTY3Njk1NTg3Ni43OTYzMjgsIm5iZiI6MTY3Njk1NTg3Ni43OTYzMjksImV4cCI6MTcwODQ5MTg3Ni43OTM0OSwic3ViIjoiIiwic2NvcGVzIjpbXX0.tRpu5PMcSz6rVNRA4wCKXc97qGyum7ytQha-FG89TCOasLOO7HO7qIdU4tRP3ZiGTtg6ej8GOhaz5AKzqSE2jfTwirJC41gmcqP_qbNg9AoUOMoj2F5SmFuitxlED_HneoyfeZxhrMHPRIzMX2HswMSfozpQbU_LZ3FGOUmSUh16REzgcGeyvaZ5x0V5JJQDQT32gR7HLH2yxRjukUlJS4Qg1R1cgiyn-JzDlzsHvykcSk480N8X9qT_f1CjPNJgAmrp3NyP1VkoVLh5yXQpCu7B_ezTR37tAW54DDvkk2pO_CjVqtflfz02sI3RynhkhRb-ICGdGqk7vxXwzeyBGVOrbS7VFHnoDQMMEXkk6k_9wM-L1fuQ_bAc3b3vwbpE3PDiz3PAhIRjrQUCtQBW5VROjnyhCZT-4bPt8-ovX4-FRI1TZCpVmBdK2KoQwaQF2ojRiaLggZ2jwQZTt3BhRs7VvBkcNjP6JvvRpoYcHM-UwW90efiYB17qLMk30OKHMksE9UAbj9q-4Ej6Ivok7TTbMlYu4OaTgz_gaEOWMQaUUGlqLqS0_2mH9INMBTeKxooOn1s0D7H-zYRsL5F5FOWECqU3zk9PJpid6GPoIBYkPP35aGQ4qsDaCCwG8L1RpsPPopHWUSFkJZcYyaJQjYBPMA6kbfPIghPLJle99yQ";
+	//Токен = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxMDA5IiwianRpIjoiMDJlZDk1YTg5OTAwNGQ5MzJhNDU0YThhMjFjMmFiNDc1ZTEyMzk4YmFiYjA0NTQ1MGZlYWRlMTRjYTliNDUzMmJjOTA4YzcwNTRkNDEwYjkiLCJpYXQiOjE2OTM4MTgzMjUuMzUzMzY5LCJuYmYiOjE2OTM4MTgzMjUuMzUzMzcxLCJleHAiOjE3MjU0NDA3MjUuMzQ5NTM3LCJzdWIiOiIiLCJzY29wZXMiOltdfQ.I5qyYrw9RQrUuZibHnJkmST_Y7VotGVW16xT2Nn9R7jAhLDDICj4xgPuBwslCs_5vRuuvYlX_KkZRbX42EnApwgBgME6BqoiS6RiW88V8qoPhiBVUh-eaMyAtf714klTOs6AVgxOxuLK4tPqgEQJUQwNhRhdFE65RhR24GUWnNtIqdb7otYWexkwXSf6rDhCXidfDNv2DVXB9Y29kgVlvA0jg26bR40Rqn92iccqHezRKfUb4LiumLxT_QNskGpeyKZDD5ecdjtQlipZcymK9t03Ed6dsyNofaSixJa640IIGbIonkhWauCseNsPicWsXcGBCizrQ9ZWOWSoWOAMderv3TayJth7oxmclZUX0lxoeeJlkRVTAgrD39Z2LGTM3PNo17Dw5S9IVyUFmzQa_CSaTEG6dDUXcSNvqZoSHJfs2u5d-04XiZs_NkaBaRnSoj2jdPGwU5Y8zKieY2rAjXK_W8ZqLFiAvOr5VPlhmIlD82ARRcp40LpobYVTncgQuDyX_ChlkVrH3qNFpZsZ2CIZqY7u2Jyug0aR3_N_lEzQ-odzbDLp6ujHzk6KEXcbIsK1R_6kok0rzQv5XOhuITlkxLiTnmZNIA2AOgWfFZ2OlC91pmCH6j7c6S3TgW7FJsypx6hNx2N4cwWvkUUa5uZ1HJ5HxFvUWwsG5phNiuo";
+	Токен = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiI3NzgiLCJqdGkiOiI2NzEwZDIzNjA1ZjE2ZDQ2Y2Y3YzVkMGFjMDQwYmRiMjNiMGY5ZjQ1M2NjODFkMDAzMjNkOTZlYWM3NWVhNDdjNTY3ZDAyMDNiYWYwYWJhMCIsImlhdCI6MTY3Njk1NTg3Ni43OTYzMjgsIm5iZiI6MTY3Njk1NTg3Ni43OTYzMjksImV4cCI6MTcwODQ5MTg3Ni43OTM0OSwic3ViIjoiIiwic2NvcGVzIjpbXX0.tRpu5PMcSz6rVNRA4wCKXc97qGyum7ytQha-FG89TCOasLOO7HO7qIdU4tRP3ZiGTtg6ej8GOhaz5AKzqSE2jfTwirJC41gmcqP_qbNg9AoUOMoj2F5SmFuitxlED_HneoyfeZxhrMHPRIzMX2HswMSfozpQbU_LZ3FGOUmSUh16REzgcGeyvaZ5x0V5JJQDQT32gR7HLH2yxRjukUlJS4Qg1R1cgiyn-JzDlzsHvykcSk480N8X9qT_f1CjPNJgAmrp3NyP1VkoVLh5yXQpCu7B_ezTR37tAW54DDvkk2pO_CjVqtflfz02sI3RynhkhRb-ICGdGqk7vxXwzeyBGVOrbS7VFHnoDQMMEXkk6k_9wM-L1fuQ_bAc3b3vwbpE3PDiz3PAhIRjrQUCtQBW5VROjnyhCZT-4bPt8-ovX4-FRI1TZCpVmBdK2KoQwaQF2ojRiaLggZ2jwQZTt3BhRs7VvBkcNjP6JvvRpoYcHM-UwW90efiYB17qLMk30OKHMksE9UAbj9q-4Ej6Ivok7TTbMlYu4OaTgz_gaEOWMQaUUGlqLqS0_2mH9INMBTeKxooOn1s0D7H-zYRsL5F5FOWECqU3zk9PJpid6GPoIBYkPP35aGQ4qsDaCCwG8L1RpsPPopHWUSFkJZcYyaJQjYBPMA6kbfPIghPLJle99yQ";
 	//Токен = Новый ТокенДоступа;
 	// КлючПодписи = Константы.dls_КлючДоступа.Получить();
 	//Токен.Подписать(АлгоритмПодписиТокенаДоступа.HS256,КлючПодписи);
@@ -574,81 +690,9 @@
 КонецФункции
 
 &НаСервере
-Функция ПолучитьПозишн(Пэйж)
-	Токен = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxMDA5IiwianRpIjoiMDJlZDk1YTg5OTAwNGQ5MzJhNDU0YThhMjFjMmFiNDc1ZTEyMzk4YmFiYjA0NTQ1MGZlYWRlMTRjYTliNDUzMmJjOTA4YzcwNTRkNDEwYjkiLCJpYXQiOjE2OTM4MTgzMjUuMzUzMzY5LCJuYmYiOjE2OTM4MTgzMjUuMzUzMzcxLCJleHAiOjE3MjU0NDA3MjUuMzQ5NTM3LCJzdWIiOiIiLCJzY29wZXMiOltdfQ.I5qyYrw9RQrUuZibHnJkmST_Y7VotGVW16xT2Nn9R7jAhLDDICj4xgPuBwslCs_5vRuuvYlX_KkZRbX42EnApwgBgME6BqoiS6RiW88V8qoPhiBVUh-eaMyAtf714klTOs6AVgxOxuLK4tPqgEQJUQwNhRhdFE65RhR24GUWnNtIqdb7otYWexkwXSf6rDhCXidfDNv2DVXB9Y29kgVlvA0jg26bR40Rqn92iccqHezRKfUb4LiumLxT_QNskGpeyKZDD5ecdjtQlipZcymK9t03Ed6dsyNofaSixJa640IIGbIonkhWauCseNsPicWsXcGBCizrQ9ZWOWSoWOAMderv3TayJth7oxmclZUX0lxoeeJlkRVTAgrD39Z2LGTM3PNo17Dw5S9IVyUFmzQa_CSaTEG6dDUXcSNvqZoSHJfs2u5d-04XiZs_NkaBaRnSoj2jdPGwU5Y8zKieY2rAjXK_W8ZqLFiAvOr5VPlhmIlD82ARRcp40LpobYVTncgQuDyX_ChlkVrH3qNFpZsZ2CIZqY7u2Jyug0aR3_N_lEzQ-odzbDLp6ujHzk6KEXcbIsK1R_6kok0rzQv5XOhuITlkxLiTnmZNIA2AOgWfFZ2OlC91pmCH6j7c6S3TgW7FJsypx6hNx2N4cwWvkUUa5uZ1HJ5HxFvUWwsG5phNiuo";
-	//Токен = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiI3NzgiLCJqdGkiOiI2NzEwZDIzNjA1ZjE2ZDQ2Y2Y3YzVkMGFjMDQwYmRiMjNiMGY5ZjQ1M2NjODFkMDAzMjNkOTZlYWM3NWVhNDdjNTY3ZDAyMDNiYWYwYWJhMCIsImlhdCI6MTY3Njk1NTg3Ni43OTYzMjgsIm5iZiI6MTY3Njk1NTg3Ni43OTYzMjksImV4cCI6MTcwODQ5MTg3Ni43OTM0OSwic3ViIjoiIiwic2NvcGVzIjpbXX0.tRpu5PMcSz6rVNRA4wCKXc97qGyum7ytQha-FG89TCOasLOO7HO7qIdU4tRP3ZiGTtg6ej8GOhaz5AKzqSE2jfTwirJC41gmcqP_qbNg9AoUOMoj2F5SmFuitxlED_HneoyfeZxhrMHPRIzMX2HswMSfozpQbU_LZ3FGOUmSUh16REzgcGeyvaZ5x0V5JJQDQT32gR7HLH2yxRjukUlJS4Qg1R1cgiyn-JzDlzsHvykcSk480N8X9qT_f1CjPNJgAmrp3NyP1VkoVLh5yXQpCu7B_ezTR37tAW54DDvkk2pO_CjVqtflfz02sI3RynhkhRb-ICGdGqk7vxXwzeyBGVOrbS7VFHnoDQMMEXkk6k_9wM-L1fuQ_bAc3b3vwbpE3PDiz3PAhIRjrQUCtQBW5VROjnyhCZT-4bPt8-ovX4-FRI1TZCpVmBdK2KoQwaQF2ojRiaLggZ2jwQZTt3BhRs7VvBkcNjP6JvvRpoYcHM-UwW90efiYB17qLMk30OKHMksE9UAbj9q-4Ej6Ivok7TTbMlYu4OaTgz_gaEOWMQaUUGlqLqS0_2mH9INMBTeKxooOn1s0D7H-zYRsL5F5FOWECqU3zk9PJpid6GPoIBYkPP35aGQ4qsDaCCwG8L1RpsPPopHWUSFkJZcYyaJQjYBPMA6kbfPIghPLJle99yQ";
-	//Токен = Новый ТокенДоступа;
-	// КлючПодписи = Константы.dls_КлючДоступа.Получить();
-	//Токен.Подписать(АлгоритмПодписиТокенаДоступа.HS256,КлючПодписи);
-	
-	Попытка
-		ЗащищенноеСоединение = Новый ЗащищенноеСоединениеOpenSSL();
-		HTTP = Новый HTTPСоединение("apis.clockster.com");
-    	    
-	    //создадим структуру
-	    Статус = "";
-	    Парам = Новый 
-	        Структура("page,per_page,sort,order,search",
-	        3,2,,,);
-	    //   				 
-	    ////сериализуем в json
-	    ЗаписьJSON = Новый ЗаписьJSON;
-	    ЗаписьJSON.УстановитьСтроку();
-	    ЗаписатьJSON(ЗаписьJSON, Парам);
-	    СтрокаДляТела = ЗаписьJSON.Закрыть();
-	    
-	    //получим временный файл для передачи в теле POST-запроса
-	    ФайлТелаЗапроса = ПолучитьИмяВременногоФайла();
-	    //запишем в файл содержимое тела запроса (текст)
-	    ТекстФайл = Новый ТекстовыйДокумент;
-	    ТекстФайл.УстановитьТекст(СтрокаДляТела);
-	    ТекстФайл.Записать(ФайлТелаЗапроса, КодировкаТекста.UTF8);
-	    //получим размер данных для передачи в заголовок
-	    ФайлНаОтправку = Новый Файл(ФайлТелаЗапроса);
-	    РазмерФайлаНаОтправку = XMLСтрока(ФайлНаОтправку.Размер());
-	    
-	    //заголовок создадим в виде соответствия
-	    ЗаголовокЗапросаHTTP = Новый Соответствие();
-	    //передаем в заголовках размер и тип данных на отправку
-		ЗаголовокЗапросаHTTP.Вставить("Authorization", "Bearer "+Токен);
-		ЗаголовокЗапросаHTTP.Вставить("Content-Type", "application/json");
-		ЗаголовокЗапросаHTTP.Вставить("Accept", "application/json");
-
-	    
-	    //создадим заголовок запроса
-	    ЗапросHTTP = Новый HTTPЗапрос("company/v1/positions?per_page=50&page="+Пэйж, ЗаголовокЗапросаHTTP);
-	    
-	    //загрузить строку в тело
-			    
-	    //отсылаем POST-запрос на обработку.
-	    //ссылкаНаРесурс — ссылка на веб-сервер (страницу), к которой посылается POST
-	    //запрос
-		ОтветHTTP = HTTP.Получить(ЗапросHTTP);
-		Пока ОтветHTTP.КодСостояния = 429 Цикл
-			НачОжидания = Минута(ТекущаяДата());
-			Пока НачОжидания = Минута(ТекущаяДата()) Цикл
-			КонецЦикла;
-			ОтветHTTP = HTTP.Получить(ЗапросHTTP);
-		КонецЦикла;
-		ЧтениеJSON = Новый ЧтениеJSON; 
-		ЧтениеJSON.УстановитьСтроку(ОтветHTTP.ПолучитьТелоКакСтроку());
-		Структура = ПрочитатьJSON(ЧтениеJSON);
-		ЧтениеJSON.Закрыть();
-	 
-	 	Возврат Структура.data;
-	Исключение
-		Сообщить(ОписаниеОшибки());
-		Возврат Неопределено;
-	КонецПопытки;
-	//Сообщить(ЗапросHTTP.ПолучитьТелоКакСтроку());
-	//Сообщить(ОтветHTTP.ПолучитьТело);
-КонецФункции
-
-
-&НаСервере
 Функция СоздатьЛокейшены(Сотрудник)
-	Токен = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxMDA5IiwianRpIjoiMDJlZDk1YTg5OTAwNGQ5MzJhNDU0YThhMjFjMmFiNDc1ZTEyMzk4YmFiYjA0NTQ1MGZlYWRlMTRjYTliNDUzMmJjOTA4YzcwNTRkNDEwYjkiLCJpYXQiOjE2OTM4MTgzMjUuMzUzMzY5LCJuYmYiOjE2OTM4MTgzMjUuMzUzMzcxLCJleHAiOjE3MjU0NDA3MjUuMzQ5NTM3LCJzdWIiOiIiLCJzY29wZXMiOltdfQ.I5qyYrw9RQrUuZibHnJkmST_Y7VotGVW16xT2Nn9R7jAhLDDICj4xgPuBwslCs_5vRuuvYlX_KkZRbX42EnApwgBgME6BqoiS6RiW88V8qoPhiBVUh-eaMyAtf714klTOs6AVgxOxuLK4tPqgEQJUQwNhRhdFE65RhR24GUWnNtIqdb7otYWexkwXSf6rDhCXidfDNv2DVXB9Y29kgVlvA0jg26bR40Rqn92iccqHezRKfUb4LiumLxT_QNskGpeyKZDD5ecdjtQlipZcymK9t03Ed6dsyNofaSixJa640IIGbIonkhWauCseNsPicWsXcGBCizrQ9ZWOWSoWOAMderv3TayJth7oxmclZUX0lxoeeJlkRVTAgrD39Z2LGTM3PNo17Dw5S9IVyUFmzQa_CSaTEG6dDUXcSNvqZoSHJfs2u5d-04XiZs_NkaBaRnSoj2jdPGwU5Y8zKieY2rAjXK_W8ZqLFiAvOr5VPlhmIlD82ARRcp40LpobYVTncgQuDyX_ChlkVrH3qNFpZsZ2CIZqY7u2Jyug0aR3_N_lEzQ-odzbDLp6ujHzk6KEXcbIsK1R_6kok0rzQv5XOhuITlkxLiTnmZNIA2AOgWfFZ2OlC91pmCH6j7c6S3TgW7FJsypx6hNx2N4cwWvkUUa5uZ1HJ5HxFvUWwsG5phNiuo";
-	//Токен = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiI3NzgiLCJqdGkiOiI2NzEwZDIzNjA1ZjE2ZDQ2Y2Y3YzVkMGFjMDQwYmRiMjNiMGY5ZjQ1M2NjODFkMDAzMjNkOTZlYWM3NWVhNDdjNTY3ZDAyMDNiYWYwYWJhMCIsImlhdCI6MTY3Njk1NTg3Ni43OTYzMjgsIm5iZiI6MTY3Njk1NTg3Ni43OTYzMjksImV4cCI6MTcwODQ5MTg3Ni43OTM0OSwic3ViIjoiIiwic2NvcGVzIjpbXX0.tRpu5PMcSz6rVNRA4wCKXc97qGyum7ytQha-FG89TCOasLOO7HO7qIdU4tRP3ZiGTtg6ej8GOhaz5AKzqSE2jfTwirJC41gmcqP_qbNg9AoUOMoj2F5SmFuitxlED_HneoyfeZxhrMHPRIzMX2HswMSfozpQbU_LZ3FGOUmSUh16REzgcGeyvaZ5x0V5JJQDQT32gR7HLH2yxRjukUlJS4Qg1R1cgiyn-JzDlzsHvykcSk480N8X9qT_f1CjPNJgAmrp3NyP1VkoVLh5yXQpCu7B_ezTR37tAW54DDvkk2pO_CjVqtflfz02sI3RynhkhRb-ICGdGqk7vxXwzeyBGVOrbS7VFHnoDQMMEXkk6k_9wM-L1fuQ_bAc3b3vwbpE3PDiz3PAhIRjrQUCtQBW5VROjnyhCZT-4bPt8-ovX4-FRI1TZCpVmBdK2KoQwaQF2ojRiaLggZ2jwQZTt3BhRs7VvBkcNjP6JvvRpoYcHM-UwW90efiYB17qLMk30OKHMksE9UAbj9q-4Ej6Ivok7TTbMlYu4OaTgz_gaEOWMQaUUGlqLqS0_2mH9INMBTeKxooOn1s0D7H-zYRsL5F5FOWECqU3zk9PJpid6GPoIBYkPP35aGQ4qsDaCCwG8L1RpsPPopHWUSFkJZcYyaJQjYBPMA6kbfPIghPLJle99yQ";
+	//Токен = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxMDA5IiwianRpIjoiMDJlZDk1YTg5OTAwNGQ5MzJhNDU0YThhMjFjMmFiNDc1ZTEyMzk4YmFiYjA0NTQ1MGZlYWRlMTRjYTliNDUzMmJjOTA4YzcwNTRkNDEwYjkiLCJpYXQiOjE2OTM4MTgzMjUuMzUzMzY5LCJuYmYiOjE2OTM4MTgzMjUuMzUzMzcxLCJleHAiOjE3MjU0NDA3MjUuMzQ5NTM3LCJzdWIiOiIiLCJzY29wZXMiOltdfQ.I5qyYrw9RQrUuZibHnJkmST_Y7VotGVW16xT2Nn9R7jAhLDDICj4xgPuBwslCs_5vRuuvYlX_KkZRbX42EnApwgBgME6BqoiS6RiW88V8qoPhiBVUh-eaMyAtf714klTOs6AVgxOxuLK4tPqgEQJUQwNhRhdFE65RhR24GUWnNtIqdb7otYWexkwXSf6rDhCXidfDNv2DVXB9Y29kgVlvA0jg26bR40Rqn92iccqHezRKfUb4LiumLxT_QNskGpeyKZDD5ecdjtQlipZcymK9t03Ed6dsyNofaSixJa640IIGbIonkhWauCseNsPicWsXcGBCizrQ9ZWOWSoWOAMderv3TayJth7oxmclZUX0lxoeeJlkRVTAgrD39Z2LGTM3PNo17Dw5S9IVyUFmzQa_CSaTEG6dDUXcSNvqZoSHJfs2u5d-04XiZs_NkaBaRnSoj2jdPGwU5Y8zKieY2rAjXK_W8ZqLFiAvOr5VPlhmIlD82ARRcp40LpobYVTncgQuDyX_ChlkVrH3qNFpZsZ2CIZqY7u2Jyug0aR3_N_lEzQ-odzbDLp6ujHzk6KEXcbIsK1R_6kok0rzQv5XOhuITlkxLiTnmZNIA2AOgWfFZ2OlC91pmCH6j7c6S3TgW7FJsypx6hNx2N4cwWvkUUa5uZ1HJ5HxFvUWwsG5phNiuo";
+	Токен = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiI3NzgiLCJqdGkiOiI2NzEwZDIzNjA1ZjE2ZDQ2Y2Y3YzVkMGFjMDQwYmRiMjNiMGY5ZjQ1M2NjODFkMDAzMjNkOTZlYWM3NWVhNDdjNTY3ZDAyMDNiYWYwYWJhMCIsImlhdCI6MTY3Njk1NTg3Ni43OTYzMjgsIm5iZiI6MTY3Njk1NTg3Ni43OTYzMjksImV4cCI6MTcwODQ5MTg3Ni43OTM0OSwic3ViIjoiIiwic2NvcGVzIjpbXX0.tRpu5PMcSz6rVNRA4wCKXc97qGyum7ytQha-FG89TCOasLOO7HO7qIdU4tRP3ZiGTtg6ej8GOhaz5AKzqSE2jfTwirJC41gmcqP_qbNg9AoUOMoj2F5SmFuitxlED_HneoyfeZxhrMHPRIzMX2HswMSfozpQbU_LZ3FGOUmSUh16REzgcGeyvaZ5x0V5JJQDQT32gR7HLH2yxRjukUlJS4Qg1R1cgiyn-JzDlzsHvykcSk480N8X9qT_f1CjPNJgAmrp3NyP1VkoVLh5yXQpCu7B_ezTR37tAW54DDvkk2pO_CjVqtflfz02sI3RynhkhRb-ICGdGqk7vxXwzeyBGVOrbS7VFHnoDQMMEXkk6k_9wM-L1fuQ_bAc3b3vwbpE3PDiz3PAhIRjrQUCtQBW5VROjnyhCZT-4bPt8-ovX4-FRI1TZCpVmBdK2KoQwaQF2ojRiaLggZ2jwQZTt3BhRs7VvBkcNjP6JvvRpoYcHM-UwW90efiYB17qLMk30OKHMksE9UAbj9q-4Ej6Ivok7TTbMlYu4OaTgz_gaEOWMQaUUGlqLqS0_2mH9INMBTeKxooOn1s0D7H-zYRsL5F5FOWECqU3zk9PJpid6GPoIBYkPP35aGQ4qsDaCCwG8L1RpsPPopHWUSFkJZcYyaJQjYBPMA6kbfPIghPLJle99yQ";
 	//Токен = Новый ТокенДоступа;
 	// КлючПодписи = Константы.dls_КлючДоступа.Получить();
 	//Токен.Подписать(АлгоритмПодписиТокенаДоступа.HS256,КлючПодписи);
@@ -723,8 +767,7 @@
 
 &НаСервере
 Процедура СообщитьИДНаСервере()
-	Токен = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxMDA5IiwianRpIjoiMDJlZDk1YTg5OTAwNGQ5MzJhNDU0YThhMjFjMmFiNDc1ZTEyMzk4YmFiYjA0NTQ1MGZlYWRlMTRjYTliNDUzMmJjOTA4YzcwNTRkNDEwYjkiLCJpYXQiOjE2OTM4MTgzMjUuMzUzMzY5LCJuYmYiOjE2OTM4MTgzMjUuMzUzMzcxLCJleHAiOjE3MjU0NDA3MjUuMzQ5NTM3LCJzdWIiOiIiLCJzY29wZXMiOltdfQ.I5qyYrw9RQrUuZibHnJkmST_Y7VotGVW16xT2Nn9R7jAhLDDICj4xgPuBwslCs_5vRuuvYlX_KkZRbX42EnApwgBgME6BqoiS6RiW88V8qoPhiBVUh-eaMyAtf714klTOs6AVgxOxuLK4tPqgEQJUQwNhRhdFE65RhR24GUWnNtIqdb7otYWexkwXSf6rDhCXidfDNv2DVXB9Y29kgVlvA0jg26bR40Rqn92iccqHezRKfUb4LiumLxT_QNskGpeyKZDD5ecdjtQlipZcymK9t03Ed6dsyNofaSixJa640IIGbIonkhWauCseNsPicWsXcGBCizrQ9ZWOWSoWOAMderv3TayJth7oxmclZUX0lxoeeJlkRVTAgrD39Z2LGTM3PNo17Dw5S9IVyUFmzQa_CSaTEG6dDUXcSNvqZoSHJfs2u5d-04XiZs_NkaBaRnSoj2jdPGwU5Y8zKieY2rAjXK_W8ZqLFiAvOr5VPlhmIlD82ARRcp40LpobYVTncgQuDyX_ChlkVrH3qNFpZsZ2CIZqY7u2Jyug0aR3_N_lEzQ-odzbDLp6ujHzk6KEXcbIsK1R_6kok0rzQv5XOhuITlkxLiTnmZNIA2AOgWfFZ2OlC91pmCH6j7c6S3TgW7FJsypx6hNx2N4cwWvkUUa5uZ1HJ5HxFvUWwsG5phNiuo";
-	//Токен = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiI3NzgiLCJqdGkiOiI2NzEwZDIzNjA1ZjE2ZDQ2Y2Y3YzVkMGFjMDQwYmRiMjNiMGY5ZjQ1M2NjODFkMDAzMjNkOTZlYWM3NWVhNDdjNTY3ZDAyMDNiYWYwYWJhMCIsImlhdCI6MTY3Njk1NTg3Ni43OTYzMjgsIm5iZiI6MTY3Njk1NTg3Ni43OTYzMjksImV4cCI6MTcwODQ5MTg3Ni43OTM0OSwic3ViIjoiIiwic2NvcGVzIjpbXX0.tRpu5PMcSz6rVNRA4wCKXc97qGyum7ytQha-FG89TCOasLOO7HO7qIdU4tRP3ZiGTtg6ej8GOhaz5AKzqSE2jfTwirJC41gmcqP_qbNg9AoUOMoj2F5SmFuitxlED_HneoyfeZxhrMHPRIzMX2HswMSfozpQbU_LZ3FGOUmSUh16REzgcGeyvaZ5x0V5JJQDQT32gR7HLH2yxRjukUlJS4Qg1R1cgiyn-JzDlzsHvykcSk480N8X9qT_f1CjPNJgAmrp3NyP1VkoVLh5yXQpCu7B_ezTR37tAW54DDvkk2pO_CjVqtflfz02sI3RynhkhRb-ICGdGqk7vxXwzeyBGVOrbS7VFHnoDQMMEXkk6k_9wM-L1fuQ_bAc3b3vwbpE3PDiz3PAhIRjrQUCtQBW5VROjnyhCZT-4bPt8-ovX4-FRI1TZCpVmBdK2KoQwaQF2ojRiaLggZ2jwQZTt3BhRs7VvBkcNjP6JvvRpoYcHM-UwW90efiYB17qLMk30OKHMksE9UAbj9q-4Ej6Ivok7TTbMlYu4OaTgz_gaEOWMQaUUGlqLqS0_2mH9INMBTeKxooOn1s0D7H-zYRsL5F5FOWECqU3zk9PJpid6GPoIBYkPP35aGQ4qsDaCCwG8L1RpsPPopHWUSFkJZcYyaJQjYBPMA6kbfPIghPLJle99yQ";
+	Токен = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiI3NzgiLCJqdGkiOiI2NzEwZDIzNjA1ZjE2ZDQ2Y2Y3YzVkMGFjMDQwYmRiMjNiMGY5ZjQ1M2NjODFkMDAzMjNkOTZlYWM3NWVhNDdjNTY3ZDAyMDNiYWYwYWJhMCIsImlhdCI6MTY3Njk1NTg3Ni43OTYzMjgsIm5iZiI6MTY3Njk1NTg3Ni43OTYzMjksImV4cCI6MTcwODQ5MTg3Ni43OTM0OSwic3ViIjoiIiwic2NvcGVzIjpbXX0.tRpu5PMcSz6rVNRA4wCKXc97qGyum7ytQha-FG89TCOasLOO7HO7qIdU4tRP3ZiGTtg6ej8GOhaz5AKzqSE2jfTwirJC41gmcqP_qbNg9AoUOMoj2F5SmFuitxlED_HneoyfeZxhrMHPRIzMX2HswMSfozpQbU_LZ3FGOUmSUh16REzgcGeyvaZ5x0V5JJQDQT32gR7HLH2yxRjukUlJS4Qg1R1cgiyn-JzDlzsHvykcSk480N8X9qT_f1CjPNJgAmrp3NyP1VkoVLh5yXQpCu7B_ezTR37tAW54DDvkk2pO_CjVqtflfz02sI3RynhkhRb-ICGdGqk7vxXwzeyBGVOrbS7VFHnoDQMMEXkk6k_9wM-L1fuQ_bAc3b3vwbpE3PDiz3PAhIRjrQUCtQBW5VROjnyhCZT-4bPt8-ovX4-FRI1TZCpVmBdK2KoQwaQF2ojRiaLggZ2jwQZTt3BhRs7VvBkcNjP6JvvRpoYcHM-UwW90efiYB17qLMk30OKHMksE9UAbj9q-4Ej6Ivok7TTbMlYu4OaTgz_gaEOWMQaUUGlqLqS0_2mH9INMBTeKxooOn1s0D7H-zYRsL5F5FOWECqU3zk9PJpid6GPoIBYkPP35aGQ4qsDaCCwG8L1RpsPPopHWUSFkJZcYyaJQjYBPMA6kbfPIghPLJle99yQ";
 	Локейшены = Новый ТаблицаЗначений();
 	Локейшены.Колонки.Добавить("id",Новый ОписаниеТипов("Строка", ,Новый КвалификаторыСтроки(25)));
 	Локейшены.Колонки.Добавить("Локейшен",Новый ОписаниеТипов("Строка", ,Новый КвалификаторыСтроки(25)));
