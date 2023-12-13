@@ -1,0 +1,849 @@
+
+&НаКлиенте
+Процедура ПутьНачалоВыбора(Элемент, ДанныеВыбора, СтандартнаяОбработка)
+	Диалог = Новый ДиалогВыбораФайла(РежимДиалогаВыбораФайла.ВыборКаталога);
+	Диалог.Заголовок = "Выберите папку";
+	Диалог.ПолноеИмяФайла = "";
+	Диалог.ПредварительныйПросмотр = Истина;
+	//Диалог.Фильтр = 
+	//"XML|*.xml;|";
+	Если Диалог.Выбрать() Тогда
+		Путь = Диалог.Каталог;
+	Иначе
+		Отказ = Истина;
+		Возврат;
+	КонецЕсли;
+КонецПроцедуры
+
+
+&НаСервере
+Процедура ВыгрузитьSFTPФайлыНаСервере()
+ Попытка
+  Сессия = Новый COMОбъект("WinSCP.Session");
+  
+  Настройки = Новый COMОбъект("WinSCP.SessionOptions");
+  Настройки.HostName = "129.148.208.34";
+  Настройки.UserName = "1C_SFTP_DEV_USER";
+  Настройки.Password = "DevSf@89YYu##";
+  Настройки.PortNumber = "5024";
+  Настройки.SshHostKeyFingerprint = "ssh-rsa 2048 RU5FCkGRXQH7G98l4xjh84n+RTQNJ1YlUXI8T3p+sY4";
+  
+  Сессия.Open(Настройки);
+ Исключение
+  Сообщить(ОписаниеОшибки());
+  ЗаписьЖурналаРегистрации("sFTP", УровеньЖурналаРегистрации.Ошибка,,, ОписаниеОшибки());
+  Возврат;
+ КонецПопытки;
+ 
+ Попытка
+  ФайлыИзSFTP = Сессия.ListDirectory("/home/users/1C_SFTP_DEV_USER/1C_Inbound");
+  
+  Для Каждого Файл из ФайлыИзSFTP.Files Цикл
+	  ФайлИмя = Файл.Name;
+	  ФайлРазмер = Число(Файл.Length);
+	  Если ФайлРазмер > 0 Тогда
+		  
+		  Запрос = Новый Запрос;
+		  Запрос.Текст = 
+		  "ВЫБРАТЬ
+		  |	DLS_ФайлыSFTP.Наименование КАК Наименование,
+          |	DLS_ФайлыSFTP.РазмерФайла КАК РазмерФайла,
+          |	DLS_ФайлыSFTP.Дата КАК Дата
+          |ИЗ
+          |	РегистрСведений.DLS_ФайлыSFTP КАК DLS_ФайлыSFTP
+          |Где
+          |	DLS_ФайлыSFTP.Наименование = &Наимен";
+		  Запрос.УстановитьПараметр("Наимен",ФайлИмя);
+		  Выборка = Запрос.Выполнить().Выбрать();
+		  Если Выборка.Следующий() Тогда
+			  ПроверкаФайла = Выборка.Наименование;
+		  КонецЕсли;
+		  
+		  Если Не ЗначениеЗаполнено(ПроверкаФайла) Тогда
+		  Если Строка(ФайлИмя) <> "Archive"  Тогда
+		  Результат = Сессия.GetFileToDirectory("/home/users/1C_SFTP_DEV_USER/1C_Inbound/" + ФайлИмя,Путь);
+		  
+		  ПереместитьВАрхив = Сессия.MoveFile("/home/users/1C_SFTP_DEV_USER/1C_Inbound/" + ФайлИмя,"/home/users/1C_SFTP_DEV_USER/1C_Inbound/Archive/" + ФайлИмя);
+		  
+		  
+		  ЗаписьФайлаВРегистр = РегистрыСведений.DLS_ФайлыSFTP.СоздатьМенеджерЗаписи();
+		  ЗаписьФайлаВРегистр.Наименование = ФайлИмя;
+		  ЗаписьФайлаВРегистр.РазмерФайла = ФайлРазмер;
+		  ЗаписьФайлаВРегистр.Дата = ТекущаяДата();
+		  ЗаписьФайлаВРегистр.Записать(Ложь);  
+		  КонецЕсли;
+		  КонецЕсли;
+	  КонецЕсли;
+  КонецЦикла;
+  
+  //Результат.Check();
+ Исключение
+  Сообщить(ОписаниеОшибки());
+  ЗаписьЖурналаРегистрации("sFTP", УровеньЖурналаРегистрации.Ошибка,,, ОписаниеОшибки());
+ КонецПопытки;
+ 
+КонецПроцедуры
+
+
+
+&НаСервере
+Процедура ВыполнитьЗагрузкуНаСервере()
+	СоздатьСотрудника();
+КонецПроцедуры
+
+
+Функция УбратьПробелы(Текст)
+	Возврат СокрЛП(СтрЗаменить(Текст," ",""));
+КонецФункции
+
+&НаКлиенте
+Процедура ВыполнитьЗагрузку(Команда)
+	//ВыгрузитьSFTPФайлыНаСервере();
+	ВыполнитьЗагрузкуНаСервере();
+КонецПроцедуры
+
+
+
+
+&НаСервере
+Процедура СоздатьСотрудника()
+	//Токен = Константы.dls_КлючДоступа.Получить();
+	Токен = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxMDA5IiwianRpIjoiMDJlZDk1YTg5OTAwNGQ5MzJhNDU0YThhMjFjMmFiNDc1ZTEyMzk4YmFiYjA0NTQ1MGZlYWRlMTRjYTliNDUzMmJjOTA4YzcwNTRkNDEwYjkiLCJpYXQiOjE2OTM4MTgzMjUuMzUzMzY5LCJuYmYiOjE2OTM4MTgzMjUuMzUzMzcxLCJleHAiOjE3MjU0NDA3MjUuMzQ5NTM3LCJzdWIiOiIiLCJzY29wZXMiOltdfQ.I5qyYrw9RQrUuZibHnJkmST_Y7VotGVW16xT2Nn9R7jAhLDDICj4xgPuBwslCs_5vRuuvYlX_KkZRbX42EnApwgBgME6BqoiS6RiW88V8qoPhiBVUh-eaMyAtf714klTOs6AVgxOxuLK4tPqgEQJUQwNhRhdFE65RhR24GUWnNtIqdb7otYWexkwXSf6rDhCXidfDNv2DVXB9Y29kgVlvA0jg26bR40Rqn92iccqHezRKfUb4LiumLxT_QNskGpeyKZDD5ecdjtQlipZcymK9t03Ed6dsyNofaSixJa640IIGbIonkhWauCseNsPicWsXcGBCizrQ9ZWOWSoWOAMderv3TayJth7oxmclZUX0lxoeeJlkRVTAgrD39Z2LGTM3PNo17Dw5S9IVyUFmzQa_CSaTEG6dDUXcSNvqZoSHJfs2u5d-04XiZs_NkaBaRnSoj2jdPGwU5Y8zKieY2rAjXK_W8ZqLFiAvOr5VPlhmIlD82ARRcp40LpobYVTncgQuDyX_ChlkVrH3qNFpZsZ2CIZqY7u2Jyug0aR3_N_lEzQ-odzbDLp6ujHzk6KEXcbIsK1R_6kok0rzQv5XOhuITlkxLiTnmZNIA2AOgWfFZ2OlC91pmCH6j7c6S3TgW7FJsypx6hNx2N4cwWvkUUa5uZ1HJ5HxFvUWwsG5phNiuo";
+	//Токен = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiI3NzgiLCJqdGkiOiI2NzEwZDIzNjA1ZjE2ZDQ2Y2Y3YzVkMGFjMDQwYmRiMjNiMGY5ZjQ1M2NjODFkMDAzMjNkOTZlYWM3NWVhNDdjNTY3ZDAyMDNiYWYwYWJhMCIsImlhdCI6MTY3Njk1NTg3Ni43OTYzMjgsIm5iZiI6MTY3Njk1NTg3Ni43OTYzMjksImV4cCI6MTcwODQ5MTg3Ni43OTM0OSwic3ViIjoiIiwic2NvcGVzIjpbXX0.tRpu5PMcSz6rVNRA4wCKXc97qGyum7ytQha-FG89TCOasLOO7HO7qIdU4tRP3ZiGTtg6ej8GOhaz5AKzqSE2jfTwirJC41gmcqP_qbNg9AoUOMoj2F5SmFuitxlED_HneoyfeZxhrMHPRIzMX2HswMSfozpQbU_LZ3FGOUmSUh16REzgcGeyvaZ5x0V5JJQDQT32gR7HLH2yxRjukUlJS4Qg1R1cgiyn-JzDlzsHvykcSk480N8X9qT_f1CjPNJgAmrp3NyP1VkoVLh5yXQpCu7B_ezTR37tAW54DDvkk2pO_CjVqtflfz02sI3RynhkhRb-ICGdGqk7vxXwzeyBGVOrbS7VFHnoDQMMEXkk6k_9wM-L1fuQ_bAc3b3vwbpE3PDiz3PAhIRjrQUCtQBW5VROjnyhCZT-4bPt8-ovX4-FRI1TZCpVmBdK2KoQwaQF2ojRiaLggZ2jwQZTt3BhRs7VvBkcNjP6JvvRpoYcHM-UwW90efiYB17qLMk30OKHMksE9UAbj9q-4Ej6Ivok7TTbMlYu4OaTgz_gaEOWMQaUUGlqLqS0_2mH9INMBTeKxooOn1s0D7H-zYRsL5F5FOWECqU3zk9PJpid6GPoIBYkPP35aGQ4qsDaCCwG8L1RpsPPopHWUSFkJZcYyaJQjYBPMA6kbfPIghPLJle99yQ";
+	Локейшены = Новый ТаблицаЗначений();
+	Локейшены.Колонки.Добавить("id",Новый ОписаниеТипов("Строка", ,Новый КвалификаторыСтроки(25)));
+	Локейшены.Колонки.Добавить("Локейшен",Новый ОписаниеТипов("Строка", ,Новый КвалификаторыСтроки(25)));
+	
+	НовыеПодр = Новый ТаблицаЗначений;
+	НовыеПодр.Колонки.Добавить("id",Новый ОписаниеТипов("Строка", ,Новый КвалификаторыСтроки(25)));
+	НовыеПодр.Колонки.Добавить("Локейшен");
+	
+	й=1;
+	Пока й>0 Цикл
+		ТекЛокейшены = ПолучитьЛокейшены(й);
+		Если Не ЗначениеЗаполнено(ТекЛокейшены) Тогда
+			Прервать;
+		КонецЕсли;
+		Для Каждого Сотр из ТекЛокейшены Цикл
+			Стр=Локейшены.Добавить();
+			Стр.id = УбратьПробелы(Сотр.id);
+			Стр.Локейшен = УбратьПробелы(Сотр.title);
+		КонецЦикла;
+		й=й+1;
+	КонецЦикла;
+	////////////////////////
+    Позишн = Новый Соответствие;
+		
+	й=1;
+	Пока й>0 Цикл
+		ТекПозишн = ПолучитьПозишн(й);
+		Если Не ЗначениеЗаполнено(ТекПозишн) Тогда
+			Прервать;
+		КонецЕсли;
+		Для Каждого Сотр из ТекПозишн Цикл
+			Позишн.Вставить(УбратьПробелы(Сотр.title),УбратьПробелы(Сотр.id));
+		КонецЦикла;
+		й=й+1;
+	КонецЦикла;
+	///////////////
+	
+	Масс = Новый Массив;
+	Масс.Добавить(Тип("Число")); 
+	ОписаниеТ = Новый ОписаниеТипов(Масс,,,Новый КвалификаторыЧисла(12,0)); 
+	й=1; 
+	ЛокСотр = Новый ТаблицаЗначений();
+	ЛокСотр.Колонки.Добавить("Локейшены");//,Новый ОписаниеТипов("Массив"));
+	ЛокСотр.Колонки.Добавить("ИД",Новый ОписаниеТипов("Строка", ,Новый КвалификаторыСтроки(25)));
+	ВсеСотрудники = Новый ТаблицаЗначений();
+	ВсеСотрудники.Колонки.Добавить("Код",Новый ОписаниеТипов("Строка", ,Новый КвалификаторыСтроки(25)));
+	ВсеСотрудники.Колонки.Добавить("ИД",Новый ОписаниеТипов("Строка", ,Новый КвалификаторыСтроки(25)));
+	ВсеСотрудники.Колонки.Добавить("Локейшен",Новый ОписаниеТипов("Строка", ,Новый КвалификаторыСтроки(25)));
+	ВсеСотрудники.Колонки.Добавить("Роль",Новый ОписаниеТипов("Строка", ,Новый КвалификаторыСтроки(25)));
+	ВсеСотрудники.Колонки.Добавить("Увол",Новый ОписаниеТипов("Строка", ,Новый КвалификаторыСтроки(25)));
+	//ВсеСотрудники.Колонки.Добавить("Локейшены",ОписаниеТ);
+	//ВсеСотрудники.Колонки.Добавить("Локейшены",Новый ОписаниеТипов("Массив"));
+	
+	Пока й>0 Цикл
+		Сотрудники = ПолучитьЮзеров(й);
+		Если Не ЗначениеЗаполнено(Сотрудники) Тогда
+			Прервать;
+		КонецЕсли;
+		Для Каждого Сотр из Сотрудники Цикл
+			Стр=ВсеСотрудники.Добавить();
+			Стр.Код = УбратьПробелы(Сотр.code);
+			Стр.ИД = УбратьПробелы(Сотр.id);
+			Стр.Локейшен = УбратьПробелы(Сотр.location_id);
+			//Стр.Роль = "employee";
+			Стр.Роль = ?(СокрЛП(Сотр.role) = "", "employee", СокрЛП(Сотр.role)); 
+			
+			Стр.Увол = УбратьПробелы(Сотр.date_leave);
+			Стр1 = ЛокСотр.Добавить();
+			Стр1.ИД = УбратьПробелы(Сотр.id);
+			Стр1.Локейшены = Сотр.locations;
+			
+		КонецЦикла;
+		й=й+1;
+	КонецЦикла;
+	
+	//Если ВсеСотрудники.Количество()=0 Тогда
+	//	Сообщить("Не найдены сотрудники");
+	//	Возврат;
+	//КонецЕсли;
+	
+	Запрос = Новый Запрос;
+	Запрос.Текст = "Выбрать ВТ.ИД, ВТ.КОД, ВТ.Локейшен, ВТ.Роль Поместить ВТ_Сотрудников из &Сотрудники как ВТ где Увол =""null"" или Увол is null или Увол = """" ;  
+	|
+	|        
+|Выбрать Спр.Ссылка, Доп.Значение СтарыйКод 
+|Поместить ВТ_ТЗСотрудников 
+|из Справочник.Сотрудники Как Спр
+|	левое Соединение (выбрать Максимум(НомерСтроки) макс, Ссылка, Свойство из справочник.Сотрудники.ДополнительныеРеквизиты 
+|	где Свойство.Наименование = ""Старый код (Сотрудники)"" сгруппировать по Ссылка, Свойство) Допмакс 
+|	По ДопМакс.ссылка  = Спр.Ссылка
+|Левое Соединение справочник.Сотрудники.ДополнительныеРеквизиты Доп По Доп.ссылка  = Спр.Ссылка и Доп.Свойство.Наименование = ""Старый код (Сотрудники)""
+| и Доп.НомерСтроки = ДопМакс.Макс
+|Внутреннее Соединение РегистрСведений.КадроваяИсторияСотрудников.СрезПоследних() КИ
+|По КИ.Сотрудник = Спр.Ссылка и Не (КИ.Регистратор Ссылка Документ.Увольнение или КИ.Регистратор Ссылка Документ.УвольнениеСписком)
+| Где КИ.Подразделение в иерархии (&Подр)  
+	|;
+
+	|ВЫБРАТЬ
+	               |	Сотр.Ссылка КАК Сотрудник, ВТ.ИД, ВТ.Локейшен, ВТ.Роль, КИ.Подразделение Подразделение, Доп.Значение как КлокстерИД, КИ.Должность, КИПрием.Период как ДатаПриема , ВТ.Код как ВТКод
+	               |ИЗ
+	               |	ВТ_ТЗСотрудников КАК Сотр
+				   |	Левое Соединение ВТ_Сотрудников ВТ по ВТ.Код = Сотр.СтарыйКод или ВТ.Код = Сотр.Ссылка.Код 
+				   //|	Внутреннее Соединение РегистрСведений.КадроваяИсторияСотрудников.СрезПоследних(НачалоПериода(&Дата,Месяц), Не (Регистратор ссылка Документ.УвольнениеСписком или Регистратор ссылка Документ.Увольнение)) КИ
+				   |	Внутреннее Соединение РегистрСведений.КадроваяИсторияСотрудников.СрезПоследних(, Не (Регистратор ссылка Документ.УвольнениеСписком или Регистратор ссылка Документ.Увольнение)) КИ
+				   |	По КИ.Сотрудник = Сотр.Ссылка
+				   |	Левое Соединение (выбрать Максимум(НомерСтроки) макс, Ссылка, Свойство из справочник.ПодразделенияОрганизаций.ДополнительныеРеквизиты сгруппировать по Ссылка, Свойство) Допмакс 
+				   |	По ДопМакс.ссылка  = КИ.Подразделение и ДопМакс.Свойство.Наименование = ""ИДКлокстера (Подразделения)""
+				   |	Левое Соединение справочник.ПодразделенияОрганизаций.ДополнительныеРеквизиты  Доп 
+				   |	По Доп.ссылка  = КИ.Подразделение и Доп.Свойство.Наименование = ""ИДКлокстера (Подразделения)"" и Доп.НомерСтроки = ДопМакс.Макс
+				   |	Внутреннее Соединение РегистрСведений.КадроваяИсторияСотрудников.СрезПоследних(, Регистратор ссылка Документ.ПриемНаРаботуСписком или Регистратор ссылка Документ.ПриемНаРаботу или Регистратор ссылка Документ.НачальнаяШтатнаяРасстановка) КИПрием
+				   |	По КИПрием.Сотрудник = Сотр.Ссылка Где Не Сотр.Ссылка.ПометкаУдаления"; 
+				   //|Где 1=1"; //ВТ.Код is null ";
+	Запрос.УстановитьПараметр("Дата", ТекущаяДата());
+	Запрос.УстановитьПараметр("Подр", Подр);
+	Если ЗначениеЗаполнено(СотрудникФорм) Тогда 
+		Запрос.Текст = Запрос.Текст + "
+		| и Сотр.Ссылка = &Сотрудник";
+		Запрос.УстановитьПараметр("Сотрудник", СотрудникФорм);
+	КонецЕсли;
+	Запрос.Текст = Запрос.Текст + " Упорядочить по Сотр.Ссылка.Код";
+	Запрос.УстановитьПараметр("Сотрудники", ВсеСотрудники);
+	//Запрос.УстановитьПараметр("ТЗСотрудники", ТЗСотрудников);
+
+	
+	ТЗСотрудников = Запрос.Выполнить().Выгрузить();
+	
+	
+	Попытка
+		HTTP = Новый HTTPСоединение("apis.clockster.com");
+				//создадим заголовок запроса
+		ЗаголовокЗапросаHTTP = Новый Соответствие();		
+		ЗаголовокЗапросаHTTP.Вставить("Accept", "application/json; charset=utf-8");
+		ЗаголовокЗапросаHTTP.Вставить("Content-Type", "application/json; charset=utf-8");
+		ЗаголовокЗапросаHTTP.Вставить("Authorization", "Bearer "+Токен);
+		
+		Для Каждого ТекСотрудник из ТЗСотрудников Цикл
+			
+			ЛокейшенИмеется = Ложь;
+			Для Каждого Локейшен из Локейшены цикл
+				
+				Если УбратьПРобелы(ТекСотрудник.КлокстерИД) = УбратьПРобелы(Локейшен.id) Тогда
+					ЛокейшенИмеется = Истина;
+					ЛокОтвет = УбратьПРобелы(ТекСотрудник.КлокстерИД); 
+					Прервать;
+				КонецЕсли; 
+								
+			КонецЦикла;      
+			Если ЛокейшенИмеется = Ложь Тогда 
+				Для Каждого Локейшен из НовыеПодр цикл
+				
+					Если ТекСотрудник.Подразделение = Локейшен.Локейшен Тогда
+						ЛокейшенИмеется = Истина;
+						ЛокОтвет = УбратьПРобелы(Локейшен.id); 
+						Прервать;
+					КонецЕсли; 
+									
+				КонецЦикла;
+			КонецЕсли;
+			
+			Если ЛокейшенИмеется = Ложь Тогда	
+				ЛокОтвет = УбратьПРобелы(СоздатьЛокейшены(ТекСотрудник));
+				Если ЛокОтвет = Неопределено Тогда 
+					Сообщить("Не создан/обновлен Локейшен для сотрудника "+ТекСотрудник.Сотрудник.Наименование );
+					Продолжить;
+				КонецЕсли;
+				
+				//Локейшены = Новый ТаблицаЗначений();
+				//Локейшены.Колонки.Добавить("id",Новый ОписаниеТипов("Строка", ,Новый КвалификаторыСтроки(25)));
+				//Локейшены.Колонки.Добавить("Локейшен",Новый ОписаниеТипов("Строка", ,Новый КвалификаторыСтроки(25)));
+				//
+				//й=1;
+				//Пока й>0 Цикл
+				//	ТекЛокейшены = ПолучитьЛокейшены(й);
+				//	Если Не ЗначениеЗаполнено(ТекЛокейшены) Тогда
+				//		Прервать;
+				//	КонецЕсли;
+				//	Для Каждого Сотр из ТекЛокейшены Цикл
+				//		Стр=Локейшены.Добавить();
+				//		Стр.id = УбратьПробелы(Сотр.id);
+				//		Стр.Локейшен = УбратьПробелы(Сотр.title);
+				//	КонецЦикла;
+				//	й=й+1;
+				//КонецЦикла; 
+				
+				СтрЛок = Локейшены.Добавить();
+				СтрЛок.id = УбратьПРобелы(ЛокОтвет); 
+				
+				СтрПодр = НовыеПодр.Добавить();
+				СтрПодр.id = УбратьПРобелы(ЛокОтвет);
+				СтрПодр.Локейшен = ТекСотрудник.Подразделение;
+			КонецЕсли ;
+
+		СтруктДата = Новый Структура;
+		МассивСотр = Новый Массив;
+		
+	   		Структ = Новый Структура; 
+			//Структ.Вставить("id",УбратьПробелы(Сотрудник.ИД));
+			Структ.Вставить("code",ТекСотрудник.Сотрудник.Код);
+			ФИО = ФизическиеЛицаКлиентСервер.ЧастиИмени(ТекСотрудник.Сотрудник.Наименование);
+			Структ.Вставить("first_name",ФИО.Имя);
+			Структ.Вставить("last_name",ФИО.Фамилия);
+			Структ.Вставить("middle_name",ФИО.Отчество);
+			
+			//КадровыеДанные = КадровыйУчет.Кадр1овыеДанныеФизическихЛиц(Истина, Сотрудник.Сотрудник.ФизическоеЛицо, "email", ТекущаяДата());
+			Представление = ТекСотрудник.Сотрудник.ФизическоеЛицо.КонтактнаяИнформация;
+						
+			//Структ.Вставить("email",""+Представление);//КадровыеДанные[0].email);
+			//Структ.Вставить("location_id",УбратьПробелы(Сотрудник.Подразделение.Код));
+			
+			
+			Лок = Новый Массив;
+			Лок.Добавить(УбратьПробелы(ЛокОтвет));
+			МассЛок = Новый Массив; 
+			ОтборС = Новый Структура;
+			ОтборС.Вставить("Ид",ТекСотрудник.ИД);
+			МассЛок = ЛокСотр.НайтиСтроки(ОтборС);
+			Для каждого ТекЛок из МассЛок Цикл 
+				Для Каждого ИД из ТекЛок.Локейшены Цикл
+					Лок.Добавить(УбратьПробелы(ИД));
+				КонецЦикла;
+			КонецЦикла;
+			Структ.Вставить("locations",Лок);
+			Структ.Вставить("position_id",Позишн.Получить(ТекСотрудник.Должность.Код));//+УбратьПробелы(Сотрудник.Должность.Код));
+			Структ.Вставить("gender",?(ТекСотрудник.Сотрудник.ФизическоеЛицо.Пол = Перечисления.ПолФизическогоЛица.Мужской,"male","female"));
+			
+			Структ.Вставить("locale","ru");
+		    Структ.Вставить("date_hire",Формат(ТекСотрудник.ДатаПриема,"ДФ=yyyy-MM-dd"));
+			Структ.Вставить("date_birth",Формат(ТекСотрудник.Сотрудник.ФизическоеЛицо.ДатаРождения,"ДФ=yyyy-MM-dd"));
+			Структ.Вставить("national_id",ТекСотрудник.Сотрудник.ФизическоеЛицо.ИНН); 
+			
+				
+			Если ТекСотрудник.ВТКод=Неопределено ИЛИ Не ЗначениеЗаполнено(ТекСотрудник.ВТКод) Тогда
+				Структ.Вставить("location_id",ЛокОтвет);//УбратьПробелы(ТекСотрудник.Подразделение.Код));
+				Структ.Вставить("role","employee");
+			Иначе
+				 Структ.Вставить("location_id",ЛокОтвет);//УбратьПробелы(ТекСотрудник.Локейшен));
+				 Структ.Вставить("role",ТекСотрудник.Роль);
+				 Структ.Вставить("id",УбратьПробелы(ТекСотрудник.ИД));
+
+			КонецЕсли;
+			 
+			Для Каждого контактнаяИнф из Представление Цикл
+				Если КонтактнаяИнф.Тип = Перечисления.ТипыКонтактнойИнформации.АдресЭлектроннойПочты тогда
+					
+					Структ.Вставить("email",""+контактнаяИнф.Представление);
+					Прервать;
+					
+				КонецЕсли	
+				
+			КонецЦикла;
+
+			МассивСотр.Добавить(Структ);			
+		СтруктДата.Вставить("data",МассивСотр);
+		
+		ЗаписьJSON = Новый ЗаписьJSON;
+		ЗаписьJSON.УстановитьСтроку();
+		
+		ЗаписатьJSON(ЗаписьJSON,СтруктДата);
+		//ЗаписатьJSON(ЗаписьJSON,Парам);       //,Парам
+		СтрокаДляТела = ЗаписьJSON.Закрыть();
+		
+		
+		ЗапросHTTP = Новый HTTPЗапрос("company/v1/users",ЗаголовокЗапросаHTTP);
+		ЗапросHTTP.УстановитьТелоИзСтроки(СтрокаДляТела,КодировкаТекста.UTF8);
+	
+		Если ТекСотрудник.ВТКод=Неопределено ИЛИ Не ЗначениеЗаполнено(ТекСотрудник.ВТКод) Тогда
+			
+			ОтветHTTP = HTTP.ВызватьHTTPМетод("POST",ЗапросHTTP);
+		Иначе
+
+			ОтветHTTP = HTTP.ВызватьHTTPМетод("PUT",ЗапросHTTP);
+			
+		КонецЕсли; 
+		
+		Пока ОтветHTTP.КодСостояния = 429 Цикл
+			НачОжидания = Минута(ТекущаяДата());
+			Пока НачОжидания = Минута(ТекущаяДата()) Цикл
+			КонецЦикла;
+			Если ТекСотрудник.ВТКод=Неопределено ИЛИ Не ЗначениеЗаполнено(ТекСотрудник.ВТКод) Тогда
+			
+				ОтветHTTP = HTTP.ВызватьHTTPМетод("POST",ЗапросHTTP);
+			Иначе
+
+				ОтветHTTP = HTTP.ВызватьHTTPМетод("PUT",ЗапросHTTP);
+			
+			КонецЕсли;
+		КонецЦикла;
+		
+		Если ОтветHTTP.КодСостояния <> 200 Тогда
+			Сообщить("Не создан/обновлен сотрудник "+ТекСотрудник.Сотрудник.Наименование + " или его локейшен");
+		Иначе  
+			ЗаписьВЛогСотрудник = РегистрыСведений.DLS_СозданныеДокументыСправочникиПриЗагрузки.СоздатьМенеджерЗаписи();
+			ЗаписьВЛогСотрудник.Сотрудник = ТекСотрудник.Сотрудник;
+			ЗаписьВЛогСотрудник.Дата = ТекущаяДата();
+			ЗаписьВЛогСотрудник.Справочник = ТекСотрудник.Сотрудник;
+			ЗаписьВЛогСотрудник.ИДОракла = ТекСотрудник.Сотрудник.Код;
+			Если ТекСотрудник.ВТКод=Неопределено ИЛИ Не ЗначениеЗаполнено(ТекСотрудник.ВТКод) Тогда
+				ЗаписьВЛогСотрудник.Комментарий = "Клокстер новый сотрудник " + ТекСотрудник.Сотрудник.Код;
+			Иначе
+				ЗаписьВЛогСотрудник.Комментарий = "Клокстер обновлен сотрудник " + ТекСотрудник.Сотрудник.Код;
+			КОнецЕсли; 
+			ЗаписьВЛогСотрудник.Записать(Ложь)
+		КонецЕсли;
+		 
+		//Получить(ЗапросHTTP);
+
+	
+		//Сообщить(ОтветHTTP.КодСостояния);
+		//Сообщить(ТекСотрудник.Сотрудник.Код);
+		КонецЦикла;
+	Исключение
+		Сообщить(ОписаниеОшибки());
+	КонецПопытки;
+	
+	
+КонецПроцедуры
+
+&НаСервере
+Функция ПолучитьЮзеров(Пэйж)
+	Токен = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxMDA5IiwianRpIjoiMDJlZDk1YTg5OTAwNGQ5MzJhNDU0YThhMjFjMmFiNDc1ZTEyMzk4YmFiYjA0NTQ1MGZlYWRlMTRjYTliNDUzMmJjOTA4YzcwNTRkNDEwYjkiLCJpYXQiOjE2OTM4MTgzMjUuMzUzMzY5LCJuYmYiOjE2OTM4MTgzMjUuMzUzMzcxLCJleHAiOjE3MjU0NDA3MjUuMzQ5NTM3LCJzdWIiOiIiLCJzY29wZXMiOltdfQ.I5qyYrw9RQrUuZibHnJkmST_Y7VotGVW16xT2Nn9R7jAhLDDICj4xgPuBwslCs_5vRuuvYlX_KkZRbX42EnApwgBgME6BqoiS6RiW88V8qoPhiBVUh-eaMyAtf714klTOs6AVgxOxuLK4tPqgEQJUQwNhRhdFE65RhR24GUWnNtIqdb7otYWexkwXSf6rDhCXidfDNv2DVXB9Y29kgVlvA0jg26bR40Rqn92iccqHezRKfUb4LiumLxT_QNskGpeyKZDD5ecdjtQlipZcymK9t03Ed6dsyNofaSixJa640IIGbIonkhWauCseNsPicWsXcGBCizrQ9ZWOWSoWOAMderv3TayJth7oxmclZUX0lxoeeJlkRVTAgrD39Z2LGTM3PNo17Dw5S9IVyUFmzQa_CSaTEG6dDUXcSNvqZoSHJfs2u5d-04XiZs_NkaBaRnSoj2jdPGwU5Y8zKieY2rAjXK_W8ZqLFiAvOr5VPlhmIlD82ARRcp40LpobYVTncgQuDyX_ChlkVrH3qNFpZsZ2CIZqY7u2Jyug0aR3_N_lEzQ-odzbDLp6ujHzk6KEXcbIsK1R_6kok0rzQv5XOhuITlkxLiTnmZNIA2AOgWfFZ2OlC91pmCH6j7c6S3TgW7FJsypx6hNx2N4cwWvkUUa5uZ1HJ5HxFvUWwsG5phNiuo";
+	//Токен = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiI3NzgiLCJqdGkiOiI2NzEwZDIzNjA1ZjE2ZDQ2Y2Y3YzVkMGFjMDQwYmRiMjNiMGY5ZjQ1M2NjODFkMDAzMjNkOTZlYWM3NWVhNDdjNTY3ZDAyMDNiYWYwYWJhMCIsImlhdCI6MTY3Njk1NTg3Ni43OTYzMjgsIm5iZiI6MTY3Njk1NTg3Ni43OTYzMjksImV4cCI6MTcwODQ5MTg3Ni43OTM0OSwic3ViIjoiIiwic2NvcGVzIjpbXX0.tRpu5PMcSz6rVNRA4wCKXc97qGyum7ytQha-FG89TCOasLOO7HO7qIdU4tRP3ZiGTtg6ej8GOhaz5AKzqSE2jfTwirJC41gmcqP_qbNg9AoUOMoj2F5SmFuitxlED_HneoyfeZxhrMHPRIzMX2HswMSfozpQbU_LZ3FGOUmSUh16REzgcGeyvaZ5x0V5JJQDQT32gR7HLH2yxRjukUlJS4Qg1R1cgiyn-JzDlzsHvykcSk480N8X9qT_f1CjPNJgAmrp3NyP1VkoVLh5yXQpCu7B_ezTR37tAW54DDvkk2pO_CjVqtflfz02sI3RynhkhRb-ICGdGqk7vxXwzeyBGVOrbS7VFHnoDQMMEXkk6k_9wM-L1fuQ_bAc3b3vwbpE3PDiz3PAhIRjrQUCtQBW5VROjnyhCZT-4bPt8-ovX4-FRI1TZCpVmBdK2KoQwaQF2ojRiaLggZ2jwQZTt3BhRs7VvBkcNjP6JvvRpoYcHM-UwW90efiYB17qLMk30OKHMksE9UAbj9q-4Ej6Ivok7TTbMlYu4OaTgz_gaEOWMQaUUGlqLqS0_2mH9INMBTeKxooOn1s0D7H-zYRsL5F5FOWECqU3zk9PJpid6GPoIBYkPP35aGQ4qsDaCCwG8L1RpsPPopHWUSFkJZcYyaJQjYBPMA6kbfPIghPLJle99yQ";
+	//Токен = Новый ТокенДоступа;
+	// КлючПодписи = Константы.dls_КлючДоступа.Получить();
+	//Токен.Подписать(АлгоритмПодписиТокенаДоступа.HS256,КлючПодписи);
+	
+	Попытка
+		ЗащищенноеСоединение = Новый ЗащищенноеСоединениеOpenSSL();
+		HTTP = Новый HTTPСоединение("apis.clockster.com");
+    	    
+	    //создадим структуру
+	    Статус = "";
+	    Парам = Новый 
+	        Структура("page,per_page,sort,order,search",
+	        3,2,,,);
+	    //   				 
+	    ////сериализуем в json
+	    ЗаписьJSON = Новый ЗаписьJSON;
+	    ЗаписьJSON.УстановитьСтроку();
+	    ЗаписатьJSON(ЗаписьJSON, Парам);
+	    СтрокаДляТела = ЗаписьJSON.Закрыть();
+	    
+	    //получим временный файл для передачи в теле POST-запроса
+	    ФайлТелаЗапроса = ПолучитьИмяВременногоФайла();
+	    //запишем в файл содержимое тела запроса (текст)
+	    ТекстФайл = Новый ТекстовыйДокумент;
+	    ТекстФайл.УстановитьТекст(СтрокаДляТела);
+	    ТекстФайл.Записать(ФайлТелаЗапроса, КодировкаТекста.UTF8);
+	    //получим размер данных для передачи в заголовок
+	    ФайлНаОтправку = Новый Файл(ФайлТелаЗапроса);
+	    РазмерФайлаНаОтправку = XMLСтрока(ФайлНаОтправку.Размер());
+	    
+	    //заголовок создадим в виде соответствия
+	    ЗаголовокЗапросаHTTP = Новый Соответствие();
+	    //передаем в заголовках размер и тип данных на отправку
+		ЗаголовокЗапросаHTTP.Вставить("Authorization", "Bearer "+Токен);
+		ЗаголовокЗапросаHTTP.Вставить("Content-Type", "application/json");
+		ЗаголовокЗапросаHTTP.Вставить("Accept", "application/json");
+
+	    
+	    //создадим заголовок запроса
+	    ЗапросHTTP = Новый HTTPЗапрос("company/v1/users?per_page=50&page="+Пэйж, ЗаголовокЗапросаHTTP);  //?location_id=7214
+	    
+	    //загрузить строку в тело
+			    
+	    //отсылаем POST-запрос на обработку.
+	    //ссылкаНаРесурс — ссылка на веб-сервер (страницу), к которой посылается POST
+	    //запрос
+		ОтветHTTP = HTTP.Получить(ЗапросHTTP);
+		
+		ОтветHTTP = HTTP.Получить(ЗапросHTTP);
+		Пока ОтветHTTP.КодСостояния = 429 Цикл
+			НачОжидания = Минута(ТекущаяДата());
+			Пока НачОжидания = Минута(ТекущаяДата()) Цикл
+			КонецЦикла;
+			ОтветHTTP = HTTP.Получить(ЗапросHTTP);
+		КонецЦикла;
+		
+		ЧтениеJSON = Новый ЧтениеJSON; 
+		ЧтениеJSON.УстановитьСтроку(ОтветHTTP.ПолучитьТелоКакСтроку());
+		Структура = ПрочитатьJSON(ЧтениеJSON);
+		ЧтениеJSON.Закрыть();
+	 
+	 	Возврат Структура.data;
+	Исключение
+		Сообщить(ОписаниеОшибки());
+		Возврат Неопределено;
+	КонецПопытки;
+	//Сообщить(ЗапросHTTP.ПолучитьТелоКакСтроку());
+	//Сообщить(ОтветHTTP.ПолучитьТело);
+КонецФункции
+
+
+&НаСервере
+Функция ПолучитьЛокейшены(Пэйж)
+	Токен = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxMDA5IiwianRpIjoiMDJlZDk1YTg5OTAwNGQ5MzJhNDU0YThhMjFjMmFiNDc1ZTEyMzk4YmFiYjA0NTQ1MGZlYWRlMTRjYTliNDUzMmJjOTA4YzcwNTRkNDEwYjkiLCJpYXQiOjE2OTM4MTgzMjUuMzUzMzY5LCJuYmYiOjE2OTM4MTgzMjUuMzUzMzcxLCJleHAiOjE3MjU0NDA3MjUuMzQ5NTM3LCJzdWIiOiIiLCJzY29wZXMiOltdfQ.I5qyYrw9RQrUuZibHnJkmST_Y7VotGVW16xT2Nn9R7jAhLDDICj4xgPuBwslCs_5vRuuvYlX_KkZRbX42EnApwgBgME6BqoiS6RiW88V8qoPhiBVUh-eaMyAtf714klTOs6AVgxOxuLK4tPqgEQJUQwNhRhdFE65RhR24GUWnNtIqdb7otYWexkwXSf6rDhCXidfDNv2DVXB9Y29kgVlvA0jg26bR40Rqn92iccqHezRKfUb4LiumLxT_QNskGpeyKZDD5ecdjtQlipZcymK9t03Ed6dsyNofaSixJa640IIGbIonkhWauCseNsPicWsXcGBCizrQ9ZWOWSoWOAMderv3TayJth7oxmclZUX0lxoeeJlkRVTAgrD39Z2LGTM3PNo17Dw5S9IVyUFmzQa_CSaTEG6dDUXcSNvqZoSHJfs2u5d-04XiZs_NkaBaRnSoj2jdPGwU5Y8zKieY2rAjXK_W8ZqLFiAvOr5VPlhmIlD82ARRcp40LpobYVTncgQuDyX_ChlkVrH3qNFpZsZ2CIZqY7u2Jyug0aR3_N_lEzQ-odzbDLp6ujHzk6KEXcbIsK1R_6kok0rzQv5XOhuITlkxLiTnmZNIA2AOgWfFZ2OlC91pmCH6j7c6S3TgW7FJsypx6hNx2N4cwWvkUUa5uZ1HJ5HxFvUWwsG5phNiuo";
+	//Токен = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiI3NzgiLCJqdGkiOiI2NzEwZDIzNjA1ZjE2ZDQ2Y2Y3YzVkMGFjMDQwYmRiMjNiMGY5ZjQ1M2NjODFkMDAzMjNkOTZlYWM3NWVhNDdjNTY3ZDAyMDNiYWYwYWJhMCIsImlhdCI6MTY3Njk1NTg3Ni43OTYzMjgsIm5iZiI6MTY3Njk1NTg3Ni43OTYzMjksImV4cCI6MTcwODQ5MTg3Ni43OTM0OSwic3ViIjoiIiwic2NvcGVzIjpbXX0.tRpu5PMcSz6rVNRA4wCKXc97qGyum7ytQha-FG89TCOasLOO7HO7qIdU4tRP3ZiGTtg6ej8GOhaz5AKzqSE2jfTwirJC41gmcqP_qbNg9AoUOMoj2F5SmFuitxlED_HneoyfeZxhrMHPRIzMX2HswMSfozpQbU_LZ3FGOUmSUh16REzgcGeyvaZ5x0V5JJQDQT32gR7HLH2yxRjukUlJS4Qg1R1cgiyn-JzDlzsHvykcSk480N8X9qT_f1CjPNJgAmrp3NyP1VkoVLh5yXQpCu7B_ezTR37tAW54DDvkk2pO_CjVqtflfz02sI3RynhkhRb-ICGdGqk7vxXwzeyBGVOrbS7VFHnoDQMMEXkk6k_9wM-L1fuQ_bAc3b3vwbpE3PDiz3PAhIRjrQUCtQBW5VROjnyhCZT-4bPt8-ovX4-FRI1TZCpVmBdK2KoQwaQF2ojRiaLggZ2jwQZTt3BhRs7VvBkcNjP6JvvRpoYcHM-UwW90efiYB17qLMk30OKHMksE9UAbj9q-4Ej6Ivok7TTbMlYu4OaTgz_gaEOWMQaUUGlqLqS0_2mH9INMBTeKxooOn1s0D7H-zYRsL5F5FOWECqU3zk9PJpid6GPoIBYkPP35aGQ4qsDaCCwG8L1RpsPPopHWUSFkJZcYyaJQjYBPMA6kbfPIghPLJle99yQ";
+	//Токен = Новый ТокенДоступа;
+	// КлючПодписи = Константы.dls_КлючДоступа.Получить();
+	//Токен.Подписать(АлгоритмПодписиТокенаДоступа.HS256,КлючПодписи);
+	
+	Попытка
+		ЗащищенноеСоединение = Новый ЗащищенноеСоединениеOpenSSL();
+		HTTP = Новый HTTPСоединение("apis.clockster.com");
+    	    
+	    //создадим структуру
+	    Статус = "";
+	    Парам = Новый 
+	        Структура("page,per_page,sort,order,search",
+	        3,2,,,);
+	    //   				 
+	    ////сериализуем в json
+	    ЗаписьJSON = Новый ЗаписьJSON;
+	    ЗаписьJSON.УстановитьСтроку();
+	    ЗаписатьJSON(ЗаписьJSON, Парам);
+	    СтрокаДляТела = ЗаписьJSON.Закрыть();
+	    
+	    //получим временный файл для передачи в теле POST-запроса
+	    ФайлТелаЗапроса = ПолучитьИмяВременногоФайла();
+	    //запишем в файл содержимое тела запроса (текст)
+	    ТекстФайл = Новый ТекстовыйДокумент;
+	    ТекстФайл.УстановитьТекст(СтрокаДляТела);
+	    ТекстФайл.Записать(ФайлТелаЗапроса, КодировкаТекста.UTF8);
+	    //получим размер данных для передачи в заголовок
+	    ФайлНаОтправку = Новый Файл(ФайлТелаЗапроса);
+	    РазмерФайлаНаОтправку = XMLСтрока(ФайлНаОтправку.Размер());
+	    
+	    //заголовок создадим в виде соответствия
+	    ЗаголовокЗапросаHTTP = Новый Соответствие();
+	    //передаем в заголовках размер и тип данных на отправку
+		ЗаголовокЗапросаHTTP.Вставить("Authorization", "Bearer "+Токен);
+		ЗаголовокЗапросаHTTP.Вставить("Content-Type", "application/json");
+		ЗаголовокЗапросаHTTP.Вставить("Accept", "application/json");
+
+	    
+	    //создадим заголовок запроса
+	    ЗапросHTTP = Новый HTTPЗапрос("company/v1/locations?per_page=50&page="+Пэйж, ЗаголовокЗапросаHTTP);
+	    
+	    //загрузить строку в тело
+			    
+	    //отсылаем POST-запрос на обработку.
+	    //ссылкаНаРесурс — ссылка на веб-сервер (страницу), к которой посылается POST
+	    //запрос
+		ОтветHTTP = HTTP.Получить(ЗапросHTTP);
+		Пока ОтветHTTP.КодСостояния = 429 Цикл
+			НачОжидания = Минута(ТекущаяДата());
+			Пока НачОжидания = Минута(ТекущаяДата()) Цикл
+			КонецЦикла;
+			ОтветHTTP = HTTP.Получить(ЗапросHTTP);
+		КонецЦикла;
+		ЧтениеJSON = Новый ЧтениеJSON; 
+		ЧтениеJSON.УстановитьСтроку(ОтветHTTP.ПолучитьТелоКакСтроку());
+		Структура = ПрочитатьJSON(ЧтениеJSON);
+		ЧтениеJSON.Закрыть();
+	 
+	 	Возврат Структура.data;
+	Исключение
+		Сообщить(ОписаниеОшибки());
+		Возврат Неопределено;
+	КонецПопытки;
+	//Сообщить(ЗапросHTTP.ПолучитьТелоКакСтроку());
+	//Сообщить(ОтветHTTP.ПолучитьТело);
+КонецФункции
+
+&НаСервере
+Функция ПолучитьПозишн(Пэйж)
+	Токен = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxMDA5IiwianRpIjoiMDJlZDk1YTg5OTAwNGQ5MzJhNDU0YThhMjFjMmFiNDc1ZTEyMzk4YmFiYjA0NTQ1MGZlYWRlMTRjYTliNDUzMmJjOTA4YzcwNTRkNDEwYjkiLCJpYXQiOjE2OTM4MTgzMjUuMzUzMzY5LCJuYmYiOjE2OTM4MTgzMjUuMzUzMzcxLCJleHAiOjE3MjU0NDA3MjUuMzQ5NTM3LCJzdWIiOiIiLCJzY29wZXMiOltdfQ.I5qyYrw9RQrUuZibHnJkmST_Y7VotGVW16xT2Nn9R7jAhLDDICj4xgPuBwslCs_5vRuuvYlX_KkZRbX42EnApwgBgME6BqoiS6RiW88V8qoPhiBVUh-eaMyAtf714klTOs6AVgxOxuLK4tPqgEQJUQwNhRhdFE65RhR24GUWnNtIqdb7otYWexkwXSf6rDhCXidfDNv2DVXB9Y29kgVlvA0jg26bR40Rqn92iccqHezRKfUb4LiumLxT_QNskGpeyKZDD5ecdjtQlipZcymK9t03Ed6dsyNofaSixJa640IIGbIonkhWauCseNsPicWsXcGBCizrQ9ZWOWSoWOAMderv3TayJth7oxmclZUX0lxoeeJlkRVTAgrD39Z2LGTM3PNo17Dw5S9IVyUFmzQa_CSaTEG6dDUXcSNvqZoSHJfs2u5d-04XiZs_NkaBaRnSoj2jdPGwU5Y8zKieY2rAjXK_W8ZqLFiAvOr5VPlhmIlD82ARRcp40LpobYVTncgQuDyX_ChlkVrH3qNFpZsZ2CIZqY7u2Jyug0aR3_N_lEzQ-odzbDLp6ujHzk6KEXcbIsK1R_6kok0rzQv5XOhuITlkxLiTnmZNIA2AOgWfFZ2OlC91pmCH6j7c6S3TgW7FJsypx6hNx2N4cwWvkUUa5uZ1HJ5HxFvUWwsG5phNiuo";
+	//Токен = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiI3NzgiLCJqdGkiOiI2NzEwZDIzNjA1ZjE2ZDQ2Y2Y3YzVkMGFjMDQwYmRiMjNiMGY5ZjQ1M2NjODFkMDAzMjNkOTZlYWM3NWVhNDdjNTY3ZDAyMDNiYWYwYWJhMCIsImlhdCI6MTY3Njk1NTg3Ni43OTYzMjgsIm5iZiI6MTY3Njk1NTg3Ni43OTYzMjksImV4cCI6MTcwODQ5MTg3Ni43OTM0OSwic3ViIjoiIiwic2NvcGVzIjpbXX0.tRpu5PMcSz6rVNRA4wCKXc97qGyum7ytQha-FG89TCOasLOO7HO7qIdU4tRP3ZiGTtg6ej8GOhaz5AKzqSE2jfTwirJC41gmcqP_qbNg9AoUOMoj2F5SmFuitxlED_HneoyfeZxhrMHPRIzMX2HswMSfozpQbU_LZ3FGOUmSUh16REzgcGeyvaZ5x0V5JJQDQT32gR7HLH2yxRjukUlJS4Qg1R1cgiyn-JzDlzsHvykcSk480N8X9qT_f1CjPNJgAmrp3NyP1VkoVLh5yXQpCu7B_ezTR37tAW54DDvkk2pO_CjVqtflfz02sI3RynhkhRb-ICGdGqk7vxXwzeyBGVOrbS7VFHnoDQMMEXkk6k_9wM-L1fuQ_bAc3b3vwbpE3PDiz3PAhIRjrQUCtQBW5VROjnyhCZT-4bPt8-ovX4-FRI1TZCpVmBdK2KoQwaQF2ojRiaLggZ2jwQZTt3BhRs7VvBkcNjP6JvvRpoYcHM-UwW90efiYB17qLMk30OKHMksE9UAbj9q-4Ej6Ivok7TTbMlYu4OaTgz_gaEOWMQaUUGlqLqS0_2mH9INMBTeKxooOn1s0D7H-zYRsL5F5FOWECqU3zk9PJpid6GPoIBYkPP35aGQ4qsDaCCwG8L1RpsPPopHWUSFkJZcYyaJQjYBPMA6kbfPIghPLJle99yQ";
+	//Токен = Новый ТокенДоступа;
+	// КлючПодписи = Константы.dls_КлючДоступа.Получить();
+	//Токен.Подписать(АлгоритмПодписиТокенаДоступа.HS256,КлючПодписи);
+	
+	Попытка
+		ЗащищенноеСоединение = Новый ЗащищенноеСоединениеOpenSSL();
+		HTTP = Новый HTTPСоединение("apis.clockster.com");
+    	    
+	    //создадим структуру
+	    Статус = "";
+	    Парам = Новый 
+	        Структура("page,per_page,sort,order,search",
+	        3,2,,,);
+	    //   				 
+	    ////сериализуем в json
+	    ЗаписьJSON = Новый ЗаписьJSON;
+	    ЗаписьJSON.УстановитьСтроку();
+	    ЗаписатьJSON(ЗаписьJSON, Парам);
+	    СтрокаДляТела = ЗаписьJSON.Закрыть();
+	    
+	    //получим временный файл для передачи в теле POST-запроса
+	    ФайлТелаЗапроса = ПолучитьИмяВременногоФайла();
+	    //запишем в файл содержимое тела запроса (текст)
+	    ТекстФайл = Новый ТекстовыйДокумент;
+	    ТекстФайл.УстановитьТекст(СтрокаДляТела);
+	    ТекстФайл.Записать(ФайлТелаЗапроса, КодировкаТекста.UTF8);
+	    //получим размер данных для передачи в заголовок
+	    ФайлНаОтправку = Новый Файл(ФайлТелаЗапроса);
+	    РазмерФайлаНаОтправку = XMLСтрока(ФайлНаОтправку.Размер());
+	    
+	    //заголовок создадим в виде соответствия
+	    ЗаголовокЗапросаHTTP = Новый Соответствие();
+	    //передаем в заголовках размер и тип данных на отправку
+		ЗаголовокЗапросаHTTP.Вставить("Authorization", "Bearer "+Токен);
+		ЗаголовокЗапросаHTTP.Вставить("Content-Type", "application/json");
+		ЗаголовокЗапросаHTTP.Вставить("Accept", "application/json");
+
+	    
+	    //создадим заголовок запроса
+	    ЗапросHTTP = Новый HTTPЗапрос("company/v1/positions?per_page=50&page="+Пэйж, ЗаголовокЗапросаHTTP);
+	    
+	    //загрузить строку в тело
+			    
+	    //отсылаем POST-запрос на обработку.
+	    //ссылкаНаРесурс — ссылка на веб-сервер (страницу), к которой посылается POST
+	    //запрос
+		ОтветHTTP = HTTP.Получить(ЗапросHTTP);
+		Пока ОтветHTTP.КодСостояния = 429 Цикл
+			НачОжидания = Минута(ТекущаяДата());
+			Пока НачОжидания = Минута(ТекущаяДата()) Цикл
+			КонецЦикла;
+			ОтветHTTP = HTTP.Получить(ЗапросHTTP);
+		КонецЦикла;
+		ЧтениеJSON = Новый ЧтениеJSON; 
+		ЧтениеJSON.УстановитьСтроку(ОтветHTTP.ПолучитьТелоКакСтроку());
+		Структура = ПрочитатьJSON(ЧтениеJSON);
+		ЧтениеJSON.Закрыть();
+	 
+	 	Возврат Структура.data;
+	Исключение
+		Сообщить(ОписаниеОшибки());
+		Возврат Неопределено;
+	КонецПопытки;
+	//Сообщить(ЗапросHTTP.ПолучитьТелоКакСтроку());
+	//Сообщить(ОтветHTTP.ПолучитьТело);
+КонецФункции
+
+
+&НаСервере
+Функция СоздатьЛокейшены(Сотрудник)
+	Токен = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxMDA5IiwianRpIjoiMDJlZDk1YTg5OTAwNGQ5MzJhNDU0YThhMjFjMmFiNDc1ZTEyMzk4YmFiYjA0NTQ1MGZlYWRlMTRjYTliNDUzMmJjOTA4YzcwNTRkNDEwYjkiLCJpYXQiOjE2OTM4MTgzMjUuMzUzMzY5LCJuYmYiOjE2OTM4MTgzMjUuMzUzMzcxLCJleHAiOjE3MjU0NDA3MjUuMzQ5NTM3LCJzdWIiOiIiLCJzY29wZXMiOltdfQ.I5qyYrw9RQrUuZibHnJkmST_Y7VotGVW16xT2Nn9R7jAhLDDICj4xgPuBwslCs_5vRuuvYlX_KkZRbX42EnApwgBgME6BqoiS6RiW88V8qoPhiBVUh-eaMyAtf714klTOs6AVgxOxuLK4tPqgEQJUQwNhRhdFE65RhR24GUWnNtIqdb7otYWexkwXSf6rDhCXidfDNv2DVXB9Y29kgVlvA0jg26bR40Rqn92iccqHezRKfUb4LiumLxT_QNskGpeyKZDD5ecdjtQlipZcymK9t03Ed6dsyNofaSixJa640IIGbIonkhWauCseNsPicWsXcGBCizrQ9ZWOWSoWOAMderv3TayJth7oxmclZUX0lxoeeJlkRVTAgrD39Z2LGTM3PNo17Dw5S9IVyUFmzQa_CSaTEG6dDUXcSNvqZoSHJfs2u5d-04XiZs_NkaBaRnSoj2jdPGwU5Y8zKieY2rAjXK_W8ZqLFiAvOr5VPlhmIlD82ARRcp40LpobYVTncgQuDyX_ChlkVrH3qNFpZsZ2CIZqY7u2Jyug0aR3_N_lEzQ-odzbDLp6ujHzk6KEXcbIsK1R_6kok0rzQv5XOhuITlkxLiTnmZNIA2AOgWfFZ2OlC91pmCH6j7c6S3TgW7FJsypx6hNx2N4cwWvkUUa5uZ1HJ5HxFvUWwsG5phNiuo";
+	//Токен = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiI3NzgiLCJqdGkiOiI2NzEwZDIzNjA1ZjE2ZDQ2Y2Y3YzVkMGFjMDQwYmRiMjNiMGY5ZjQ1M2NjODFkMDAzMjNkOTZlYWM3NWVhNDdjNTY3ZDAyMDNiYWYwYWJhMCIsImlhdCI6MTY3Njk1NTg3Ni43OTYzMjgsIm5iZiI6MTY3Njk1NTg3Ni43OTYzMjksImV4cCI6MTcwODQ5MTg3Ni43OTM0OSwic3ViIjoiIiwic2NvcGVzIjpbXX0.tRpu5PMcSz6rVNRA4wCKXc97qGyum7ytQha-FG89TCOasLOO7HO7qIdU4tRP3ZiGTtg6ej8GOhaz5AKzqSE2jfTwirJC41gmcqP_qbNg9AoUOMoj2F5SmFuitxlED_HneoyfeZxhrMHPRIzMX2HswMSfozpQbU_LZ3FGOUmSUh16REzgcGeyvaZ5x0V5JJQDQT32gR7HLH2yxRjukUlJS4Qg1R1cgiyn-JzDlzsHvykcSk480N8X9qT_f1CjPNJgAmrp3NyP1VkoVLh5yXQpCu7B_ezTR37tAW54DDvkk2pO_CjVqtflfz02sI3RynhkhRb-ICGdGqk7vxXwzeyBGVOrbS7VFHnoDQMMEXkk6k_9wM-L1fuQ_bAc3b3vwbpE3PDiz3PAhIRjrQUCtQBW5VROjnyhCZT-4bPt8-ovX4-FRI1TZCpVmBdK2KoQwaQF2ojRiaLggZ2jwQZTt3BhRs7VvBkcNjP6JvvRpoYcHM-UwW90efiYB17qLMk30OKHMksE9UAbj9q-4Ej6Ivok7TTbMlYu4OaTgz_gaEOWMQaUUGlqLqS0_2mH9INMBTeKxooOn1s0D7H-zYRsL5F5FOWECqU3zk9PJpid6GPoIBYkPP35aGQ4qsDaCCwG8L1RpsPPopHWUSFkJZcYyaJQjYBPMA6kbfPIghPLJle99yQ";
+	//Токен = Новый ТокенДоступа;
+	// КлючПодписи = Константы.dls_КлючДоступа.Получить();
+	//Токен.Подписать(АлгоритмПодписиТокенаДоступа.HS256,КлючПодписи);
+	Попытка
+		HTTP = Новый HTTPСоединение("apis.clockster.com");
+				//создадим заголовок запроса
+		ЗаголовокЗапросаHTTP = Новый Соответствие();		
+		ЗаголовокЗапросаHTTP.Вставить("Accept", "application/json; charset=utf-8");
+		ЗаголовокЗапросаHTTP.Вставить("Content-Type", "application/json; charset=utf-8");
+		ЗаголовокЗапросаHTTP.Вставить("Authorization", "Bearer "+Токен);
+			
+		СтруктДата = Новый Структура;
+		МассивСотр = Новый Массив;
+		
+	   		Структ = Новый Структура; 
+			
+			Структ.Вставить("id",УбратьПробелы(Сотрудник.Подразделение.Код));
+			Структ.Вставить("title",УбратьПробелы(Сотрудник.Подразделение.Код)+" - "+УбратьПробелы(Сотрудник.Подразделение.Наименование));
+			
+			МассивСотр.Добавить(Структ);
+			
+		СтруктДата.Вставить("data",МассивСотр);
+		
+		ЗаписьJSON = Новый ЗаписьJSON;
+		ЗаписьJSON.УстановитьСтроку();
+		
+		ЗаписатьJSON(ЗаписьJSON,СтруктДата);
+		//ЗаписатьJSON(ЗаписьJSON,Парам);       //,Парам
+		СтрокаДляТела = ЗаписьJSON.Закрыть();
+		
+		
+		ЗапросHTTP = Новый HTTPЗапрос("company/v1/locations",ЗаголовокЗапросаHTTP);
+		ЗапросHTTP.УстановитьТелоИзСтроки(СтрокаДляТела,КодировкаТекста.UTF8);
+		
+		ОтветHTTP = HTTP.ВызватьHTTPМетод("POST",ЗапросHTTP);
+		
+		Пока ОтветHTTP.КодСостояния = 429 Цикл
+			НачОжидания = Минута(ТекущаяДата());
+			Пока НачОжидания = Минута(ТекущаяДата()) Цикл
+			КонецЦикла;
+			ОтветHTTP = HTTP.ВызватьHTTPМетод("POST",ЗапросHTTP);
+		КонецЦикла;
+				 
+		//Получить(ЗапросHTTP); 
+		Если ОтветHTTP.КодСостояния = 200 Тогда
+		
+			ТелоОтвета = ОтветHTTP.ПолучитьТелоКакСтроку(КодировкаТекста.UTF8);
+			
+			ЧтениеJSON = Новый ЧтениеJSON; 
+			ЧтениеJSON.УстановитьСтроку(ОтветHTTP.ПолучитьТелоКакСтроку());
+			СтруктураОтвета = ПрочитатьJSON(ЧтениеJSON);
+			ЧтениеJSON.Закрыть();
+			
+			ПодрОб = Сотрудник.Подразделение.ПолучитьОбъект(); 
+			ДР1 = ПодрОб.ДополнительныеРеквизиты.Добавить();
+			ДР1.Свойство = ПланыВидовХарактеристик.ДополнительныеРеквизитыИСведения.НайтиПоНаименованию("ИДКлокстера (Подразделения)");
+			ДР1.Значение = Число(СтруктураОтвета.data[0].id);
+			ПодрОб.Записать(); 
+			Возврат СтруктураОтвета.data[0].id;
+		Иначе
+			Возврат Неопределено;
+		КонецЕсли;
+		
+		//Сообщить(ОтветHTTP.КодСостояния);
+		//Сообщить(Сотрудник.Сотрудник.Код);
+
+	Исключение
+		Сообщить(ОписаниеОшибки());
+	КонецПопытки;
+
+КонецФункции
+
+&НаСервере
+Процедура СообщитьИДНаСервере()
+	Токен = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxMDA5IiwianRpIjoiMDJlZDk1YTg5OTAwNGQ5MzJhNDU0YThhMjFjMmFiNDc1ZTEyMzk4YmFiYjA0NTQ1MGZlYWRlMTRjYTliNDUzMmJjOTA4YzcwNTRkNDEwYjkiLCJpYXQiOjE2OTM4MTgzMjUuMzUzMzY5LCJuYmYiOjE2OTM4MTgzMjUuMzUzMzcxLCJleHAiOjE3MjU0NDA3MjUuMzQ5NTM3LCJzdWIiOiIiLCJzY29wZXMiOltdfQ.I5qyYrw9RQrUuZibHnJkmST_Y7VotGVW16xT2Nn9R7jAhLDDICj4xgPuBwslCs_5vRuuvYlX_KkZRbX42EnApwgBgME6BqoiS6RiW88V8qoPhiBVUh-eaMyAtf714klTOs6AVgxOxuLK4tPqgEQJUQwNhRhdFE65RhR24GUWnNtIqdb7otYWexkwXSf6rDhCXidfDNv2DVXB9Y29kgVlvA0jg26bR40Rqn92iccqHezRKfUb4LiumLxT_QNskGpeyKZDD5ecdjtQlipZcymK9t03Ed6dsyNofaSixJa640IIGbIonkhWauCseNsPicWsXcGBCizrQ9ZWOWSoWOAMderv3TayJth7oxmclZUX0lxoeeJlkRVTAgrD39Z2LGTM3PNo17Dw5S9IVyUFmzQa_CSaTEG6dDUXcSNvqZoSHJfs2u5d-04XiZs_NkaBaRnSoj2jdPGwU5Y8zKieY2rAjXK_W8ZqLFiAvOr5VPlhmIlD82ARRcp40LpobYVTncgQuDyX_ChlkVrH3qNFpZsZ2CIZqY7u2Jyug0aR3_N_lEzQ-odzbDLp6ujHzk6KEXcbIsK1R_6kok0rzQv5XOhuITlkxLiTnmZNIA2AOgWfFZ2OlC91pmCH6j7c6S3TgW7FJsypx6hNx2N4cwWvkUUa5uZ1HJ5HxFvUWwsG5phNiuo";
+	//Токен = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiI3NzgiLCJqdGkiOiI2NzEwZDIzNjA1ZjE2ZDQ2Y2Y3YzVkMGFjMDQwYmRiMjNiMGY5ZjQ1M2NjODFkMDAzMjNkOTZlYWM3NWVhNDdjNTY3ZDAyMDNiYWYwYWJhMCIsImlhdCI6MTY3Njk1NTg3Ni43OTYzMjgsIm5iZiI6MTY3Njk1NTg3Ni43OTYzMjksImV4cCI6MTcwODQ5MTg3Ni43OTM0OSwic3ViIjoiIiwic2NvcGVzIjpbXX0.tRpu5PMcSz6rVNRA4wCKXc97qGyum7ytQha-FG89TCOasLOO7HO7qIdU4tRP3ZiGTtg6ej8GOhaz5AKzqSE2jfTwirJC41gmcqP_qbNg9AoUOMoj2F5SmFuitxlED_HneoyfeZxhrMHPRIzMX2HswMSfozpQbU_LZ3FGOUmSUh16REzgcGeyvaZ5x0V5JJQDQT32gR7HLH2yxRjukUlJS4Qg1R1cgiyn-JzDlzsHvykcSk480N8X9qT_f1CjPNJgAmrp3NyP1VkoVLh5yXQpCu7B_ezTR37tAW54DDvkk2pO_CjVqtflfz02sI3RynhkhRb-ICGdGqk7vxXwzeyBGVOrbS7VFHnoDQMMEXkk6k_9wM-L1fuQ_bAc3b3vwbpE3PDiz3PAhIRjrQUCtQBW5VROjnyhCZT-4bPt8-ovX4-FRI1TZCpVmBdK2KoQwaQF2ojRiaLggZ2jwQZTt3BhRs7VvBkcNjP6JvvRpoYcHM-UwW90efiYB17qLMk30OKHMksE9UAbj9q-4Ej6Ivok7TTbMlYu4OaTgz_gaEOWMQaUUGlqLqS0_2mH9INMBTeKxooOn1s0D7H-zYRsL5F5FOWECqU3zk9PJpid6GPoIBYkPP35aGQ4qsDaCCwG8L1RpsPPopHWUSFkJZcYyaJQjYBPMA6kbfPIghPLJle99yQ";
+	Локейшены = Новый ТаблицаЗначений();
+	Локейшены.Колонки.Добавить("id",Новый ОписаниеТипов("Строка", ,Новый КвалификаторыСтроки(25)));
+	Локейшены.Колонки.Добавить("Локейшен",Новый ОписаниеТипов("Строка", ,Новый КвалификаторыСтроки(25)));
+	
+	й=1;
+	Пока й>0 Цикл
+		ТекЛокейшены = ПолучитьЛокейшены(й);
+		Если Не ЗначениеЗаполнено(ТекЛокейшены) Тогда
+			Прервать;
+		КонецЕсли;
+		Для Каждого Сотр из ТекЛокейшены Цикл
+			Стр=Локейшены.Добавить();
+			Стр.id = УбратьПробелы(Сотр.id);
+			Стр.Локейшен = УбратьПробелы(Сотр.title);
+		КонецЦикла;
+		й=й+1;
+	КонецЦикла;
+	
+	
+	Масс = Новый Массив;
+	Масс.Добавить(Тип("Число")); 
+	ОписаниеТ = Новый ОписаниеТипов(Масс,,,Новый КвалификаторыЧисла(12,0)); 
+	й=1; 
+	ЛокСотр = Новый ТаблицаЗначений();
+	ЛокСотр.Колонки.Добавить("Локейшены");//,Новый ОписаниеТипов("Массив"));
+	ЛокСотр.Колонки.Добавить("ИД",Новый ОписаниеТипов("Строка", ,Новый КвалификаторыСтроки(25)));
+	ВсеСотрудники = Новый ТаблицаЗначений();
+	ВсеСотрудники.Колонки.Добавить("Код",Новый ОписаниеТипов("Строка", ,Новый КвалификаторыСтроки(25)));
+	ВсеСотрудники.Колонки.Добавить("ИД",Новый ОписаниеТипов("Строка", ,Новый КвалификаторыСтроки(25)));
+	ВсеСотрудники.Колонки.Добавить("Пэйж",Новый ОписаниеТипов("Строка", ,Новый КвалификаторыСтроки(25)));
+	ВсеСотрудники.Колонки.Добавить("Локейшен",Новый ОписаниеТипов("Строка", ,Новый КвалификаторыСтроки(25)));
+	ВсеСотрудники.Колонки.Добавить("Роль",Новый ОписаниеТипов("Строка", ,Новый КвалификаторыСтроки(25))); 
+	ВсеСотрудники.Колонки.Добавить("Увол",Новый ОписаниеТипов("Строка", ,Новый КвалификаторыСтроки(25)));
+	//ВсеСотрудники.Колонки.Добавить("Локейшены",ОписаниеТ);
+	//ВсеСотрудники.Колонки.Добавить("Локейшены",Новый ОписаниеТипов("Массив"));
+	
+	Пока й>0 Цикл
+		Сотрудники = ПолучитьЮзеров(й);
+		Если Не ЗначениеЗаполнено(Сотрудники) Тогда
+			Прервать;
+		КонецЕсли;
+		Для Каждого Сотр из Сотрудники Цикл
+			Стр=ВсеСотрудники.Добавить();
+			Стр.Код = УбратьПробелы(Сотр.code);
+			Стр.ИД = УбратьПробелы(Сотр.id);
+			Стр.Локейшен = УбратьПробелы(Сотр.location_id);
+			Стр.Роль = "employee";
+			Стр.Пэйж = й; 
+			Стр.Увол = УбратьПробелы(Сотр.date_leave);
+			Стр1 = ЛокСотр.Добавить();
+			Стр1.ИД = УбратьПробелы(Сотр.id);
+			Стр1.Локейшены = Сотр.locations;
+			
+		КонецЦикла;
+		й=й+1;
+	КонецЦикла;
+	
+	//Если ВсеСотрудники.Количество()=0 Тогда
+	//	Сообщить("Не найдены сотрудники");
+	//	Возврат;
+	//КонецЕсли;
+	
+	Запрос = Новый Запрос;
+	Запрос.Текст = "Выбрать ВТ.Пэйж,ВТ.ИД, ВТ.КОД, ВТ.Локейшен, ВТ.Роль Поместить ВТ_Сотрудников из &Сотрудники как ВТ ;//где Увол =""null"" или Увол is null или Увол = """" ;    
+	|
+	|        
+|Выбрать Спр.Ссылка, Доп.Значение СтарыйКод 
+|Поместить ВТ_ТЗСотрудников 
+|из Справочник.Сотрудники Как Спр
+|Левое Соединение справочник.Сотрудники.ДополнительныеРеквизиты Доп По Доп.ссылка  = Спр.Ссылка и Доп.Свойство.Наименование = ""Старый код (Сотрудники)""
+|Внутреннее Соединение РегистрСведений.КадроваяИсторияСотрудников.СрезПоследних() КИ
+|По КИ.Сотрудник = Спр.Ссылка и Не (КИ.Регистратор Ссылка Документ.Увольнение или КИ.Регистратор Ссылка Документ.УвольнениеСписком)
+//|внутреннее соединение регистрСведений.DLS_СозданныеДокументыСправочникиПриЗагрузки Лог 
+//|по ЛОг.Сотрудник = Спр.Ссылка и Лог.Комментарий like ""%новый%"" и Лог.Дата >= &ДатаЛога
+	|;
+
+	|ВЫБРАТЬ
+	               |	ВТ.Пэйж, Сотр.Ссылка КАК Сотрудник, ВТ.ИД, ВТ.Локейшен, ВТ.Роль, КИ.Подразделение Подразделение, Доп.Значение как КлокстерИД, КИ.Должность, КИПрием.Период как ДатаПриема , ВТ.Код как ВТКод
+	               |ИЗ
+	               |	ВТ_ТЗСотрудников КАК Сотр
+				   |	левое Соединение ВТ_Сотрудников ВТ по ВТ.Код = Сотр.СтарыйКод или ВТ.Код = Сотр.Ссылка.Код 
+				   |	Внутреннее Соединение РегистрСведений.КадроваяИсторияСотрудников.СрезПоследних() КИ
+				   |	По КИ.Сотрудник = Сотр.Ссылка 
+				   |	Левое Соединение справочник.ПодразделенияОрганизаций.ДополнительныеРеквизиты Доп По Доп.ссылка  = КИ.Подразделение и Доп.Свойство.Наименование = ""КлокстерИД (Подразделения)""
+				   |	Внутреннее Соединение РегистрСведений.КадроваяИсторияСотрудников.СрезПоследних(, Регистратор ссылка Документ.ПриемНаРаботуСписком или Регистратор ссылка Документ.ПриемНаРаботу или Регистратор ссылка Документ.НачальнаяШтатнаяРасстановка) КИПрием
+				   |	По КИПрием.Сотрудник = Сотр.Ссылка"; 
+				   //|Где 1=1"; //ВТ.Код is null ";
+	//Запрос.УстановитьПараметр("Дата", Дата2);
+	Если ЗначениеЗаполнено(СотрудникФорм) Тогда 
+		Запрос.Текст = Запрос.Текст + "
+		| и Сотр.Ссылка = &Сотрудник";
+		Запрос.УстановитьПараметр("Сотрудник", СотрудникФорм);
+	КонецЕсли;
+	Запрос.УстановитьПараметр("Сотрудники", ВсеСотрудники);
+	Запрос.УстановитьПараметр("Даталога", НачалоДня(ТекущаяДата()));
+	//Запрос.УстановитьПараметр("ТЗСотрудники", ТЗСотрудников);
+
+	
+	ТЗСотрудников = Запрос.Выполнить().Выгрузить();
+	Для каждого Стр из ТЗСотрудников Цикл
+		Сообщить(Стр.ИД);
+		Сообщить(Стр.Пэйж);
+	КонецЦикла;
+КонецПроцедуры
+
+&НаКлиенте
+Процедура СообщитьИД(Команда)
+	СообщитьИДНаСервере();
+КонецПроцедуры
+
+&НаСервере
+Процедура ПриСозданииНаСервере(Отказ, СтандартнаяОбработка)
+	Подр = Справочники.ПодразделенияОрганизаций.НайтиПоНаименованию("Ресторан");
+КонецПроцедуры
+
+
+
+
+
+
+
+
